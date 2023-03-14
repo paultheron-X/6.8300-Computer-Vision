@@ -20,6 +20,8 @@ This will also improve the inference time of our algorithm.
 
 ### Data
 
+We will use the REDS dataset, available here:
+https://seungjunnah.github.io/Datasets/reds.html
 
 ## Environment
 
