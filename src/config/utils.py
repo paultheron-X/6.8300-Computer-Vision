@@ -21,12 +21,18 @@ def fill_config_with(config, config_parser, modifier, section, option):
 def get_config(config_parser):
     config = {}
     
+    #dataset
     config['dataroot'] = config_parser.get('dataset', 'DATAROOT')
     
-    fill_config_with(config, config_parser, int, 'model', 'EMBEDDING_SIZE')
-
-    fill_config_with(config, config_parser, json.loads, 'model', 'LAYERS')
+    #data
+    config['rolling_window'] = config_parser.getint('data', 'ROLLING_WINDOW')
+    config['batch_size'] = config_parser.getint('data', 'BATCH_SIZE')
+    
+    #model
+    #fill_config_with(config, config_parser, int, 'model', 'EMBEDDING_SIZE')
+    #fill_config_with(config, config_parser, json.loads, 'model', 'LAYERS')
   
+    
+    #training
     fill_config_with(config, config_parser, int, 'training', 'NUM_EPOCH')
-
     return config
