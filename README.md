@@ -23,6 +23,12 @@ This will also improve the inference time of our algorithm.
 We will use the REDS dataset, available here:
 https://seungjunnah.github.io/Datasets/reds.html
 
+To download the dataset, run the following command in the terminal:
+
+```bash
+bash src/preprocessing/download_data.sh    
+```
+
 ## Environment
 
 To create the environment, run the following command in the terminal:
