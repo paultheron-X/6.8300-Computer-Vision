@@ -49,3 +49,11 @@ pip install -r requirements.txt
 ```
 
 ## Sources
+
+- [Survey](https://link.springer.com/article/10.1007/s10462-022-10147-y) on VSR
+- https://arxiv.org/pdf/2212.13525.pdf
+- https://arxiv.org/pdf/2212.07339.pdf
+- https://arxiv.org/pdf/2211.01639.pdf
+- https://arxiv.org/pdf/2302.13256.pdf
+- https://arxiv.org/pdf/1609.05158.pdf
+- https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8629024&tag=1
