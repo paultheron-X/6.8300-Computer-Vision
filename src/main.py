@@ -10,19 +10,19 @@ from config import return_config
 from data_handlers.loading import VideoDataset
 
 
-def main(args):
+def main(config):
     # set the seeds
-    torch.manual_seed(42)
-    torch.cuda.manual_seed(42)
-    np.random.seed(42)
+    torch.manual_seed(config['seed'])
+    torch.cuda.manual_seed(config['seed'])
+    np.random.seed(config['seed'])
     
     logging.info("Starting main training script")
     
     logging.info("Loading data")
-    logging.debug(f"Creating dataset from path: {args.data_path}")
+    logging.debug(f"Creating dataset from path: {config['data_path']}")
     
     dataset = VideoDataset(
-        data_dir=args.data_path, rolling_window=args.rolling_window
+        data_dir=config["data_path"], rolling_window=config["rolling_window"]
     )
     
     logging.debug(f"Splitting 90/10 train/test") 
@@ -51,10 +51,10 @@ if __name__ == '__main__':
     
     #TODO: add config file and merge the args and the config: rolling_window ... things like that should be config
     #ARGS: verbose, path to config, saving path, pretrained path, saving or not ..  things that could be true or false for the same config
-    #config = return_config(args.config)
-    
-    #print(config['data_path'])
+    config = return_config(args.config)
     
     logger_setup(args)
     
-    main(args)
+    config.update(vars(args))
+
+    main(config)

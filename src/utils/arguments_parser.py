@@ -30,7 +30,8 @@ def args_parser():
     parser.add_argument(
         "--verbose", "-v", help="Sets the lebel of verbose", action="store_true"
     )
-    parser.add_argument("--config", type=str, default="src/config/config_base.cfg")
+    parser.add_argument("--config", type=str, default="config_base.cfg")
+    parser.add_argument("--seed", "-s", type=int, default=42)
     return parser.parse_args()
 
     

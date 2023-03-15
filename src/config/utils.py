@@ -12,7 +12,7 @@ def get_config_parser(filename='config_gan.cfg'):
     return config
 
 
-def fill_config_with(config, config_parser, modifier, section, option):
+def fill_config_with(config, config_parser, modifier, section, option): # handles if the option is not in the config file
     if config_parser.has_section(section) and config_parser.has_option(section, option):
         config[option.lower()] = modifier(config_parser.get(section, option))
     return config
@@ -22,11 +22,11 @@ def get_config(config_parser):
     config = {}
     
     #dataset
-    config['dataroot'] = config_parser.get('dataset', 'DATAROOT')
+    fill_config_with(config, config_parser, str, 'dataset', 'DATA_PATH')
     
     #data
-    config['rolling_window'] = config_parser.getint('data', 'ROLLING_WINDOW')
-    config['batch_size'] = config_parser.getint('data', 'BATCH_SIZE')
+    fill_config_with(config, config_parser, int, 'data', 'ROLLING_WINDOW')
+    fill_config_with(config, config_parser, int, 'data', 'BATCH_SIZE')
     
     #model
     #fill_config_with(config, config_parser, int, 'model', 'EMBEDDING_SIZE')

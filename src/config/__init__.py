@@ -12,7 +12,4 @@ Method:
 """
 
 def return_config(config_name):
-    if config_name == 'tpl':
-        return get_config(get_config_parser('config_tpl.cfg'))
-    else:
-        raise ValueError('Invalid config name')
+    return get_config(get_config_parser(config_name))
