@@ -57,3 +57,6 @@ pip install -r requirements.txt
 - https://arxiv.org/pdf/2302.13256.pdf
 - https://arxiv.org/pdf/1609.05158.pdf
 - https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8629024&tag=1
+
+Unet architecture with residual blocks
+https://openaccess.thecvf.com/content_CVPRW_2019/papers/WiCV/Hu_RUNet_A_Robust_UNet_Architecture_for_Image_Super-Resolution_CVPRW_2019_paper.pdf
