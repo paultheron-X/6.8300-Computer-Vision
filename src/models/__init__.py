@@ -1,1 +1,1 @@
-from basicVSR import basicVSR
+from .basicVSR import basicVSR

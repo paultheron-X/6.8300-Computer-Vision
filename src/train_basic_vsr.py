@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from data_handlers.loading import VideoDataset
-from models import basicVSR
+from models import basicVSR 
 from utils.loss import CharbonnierLoss
 from utils.utils_general import resize_sequences
 
