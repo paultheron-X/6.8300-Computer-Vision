@@ -37,8 +37,9 @@ def basic_vsr_parser():
     parser.add_argument('--num_input_frames', default=15,type=int)
     parser.add_argument('--val_interval', default=1000,type=int)
     parser.add_argument('--max_keys', default=270,type=int)
-    parser.add_argument('--filename_tmpl', default='{:08d}.png')
-    args = parser.parse_args()
+    parser.add_argument('--verbose', default=True,type=bool)
+    parser.add_argument('--seed', default=42,type=int)
+    return parser.parse_args()
 
 def args_parser():
     # concats the results of data_loading_parser and model_parser
@@ -46,7 +47,7 @@ def args_parser():
     parser.add_argument(
         "--verbose", "-v", help="Sets the lebel of verbose", action="store_true"
     )
-    parser.add_argument("--config", type=str, default="config_base.cfg")
+    parser.add_argument("--config", "-c", type=str, default="config_base.cfg")
     parser.add_argument("--seed", "-s", type=int, default=42)
     return parser.parse_args()
 

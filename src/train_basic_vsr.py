@@ -62,8 +62,7 @@ def main(config):
         batch_size=64,
         shuffle=False,
     )
-    
-    model = basicVSR(spynet_pretrained=args.spynet_pretrained).to(device)
+    model = basicVSR(spynet_pretrained=config['spynet_pretrained']).to(device)
     
     criterion=CharbonnierLoss().to(device)
     criterion_mse=nn.MSELoss().to(device)
@@ -81,11 +80,11 @@ def main(config):
     
     
     
-    max_epoch=args.epochs
+    max_epoch=config['epochs']
     scheduler=CosineAnnealingLR(optimizer,T_max=max_epoch,eta_min=1e-7)
 
-    os.makedirs(f'{args.log_dir}/models',exist_ok=True)
-    os.makedirs(f'{args.log_dir}/images',exist_ok=True)
+    os.makedirs(f'{config["log_dir"]}/models',exist_ok=True)
+    os.makedirs(f'{config["log_dir"]}/images',exist_ok=True)
     
     logging.info("Starting training")
     train_loss=[]
@@ -123,13 +122,13 @@ def main(config):
 
             train_loss.append(epoch_loss/len(train_loader))
 
-        if (epoch + 1) % args.val_interval != 0:
+        if (epoch + 1) % config['val_interval'] != 0:
             continue
         
         logging.debug(f"Starting validation at epoch {epoch+1}")
         model.eval()
         val_psnr,lq_psnr = 0,0
-        os.makedirs(f'{args.log_dir}/images/epoch{epoch+1:05}',exist_ok=True)
+        os.makedirs(f'{config["log_dir"]}/images/epoch{epoch+1:05}',exist_ok=True)
         with torch.no_grad():
             for idx,data in enumerate(test_loader):
                 gt_sequences, lq_sequences = data
@@ -142,24 +141,24 @@ def main(config):
                 val_psnr += 10 * log10(1 / val_mse.data)
                 lq_psnr += 10 * log10(1 / lq_mse.data)
                 
-                save_image(pred_sequences[0], f'{args.log_dir}/images/epoch{epoch+1:05}/{idx}_SR.png',nrow=5)
-                save_image(lq_sequences[0], f'{args.log_dir}/images/epoch{epoch+1:05}/{idx}_LQ.png',nrow=5)
-                save_image(gt_sequences[0], f'{args.log_dir}/images/epoch{epoch+1:05}/{idx}_GT.png',nrow=5)
+                save_image(pred_sequences[0], f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png',nrow=5)
+                save_image(lq_sequences[0], f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_LQ.png',nrow=5)
+                save_image(gt_sequences[0], f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_GT.png',nrow=5)
             
             validation_loss.append(epoch_loss/len(test_loader))
         
         logging.info(f'==[validation]== PSNR:{val_psnr / len(test_loader):.2f},(lq:{lq_psnr/len(test_loader):.2f})')
-        torch.save(model.state_dict(),f'{args.log_dir}/models/model_{epoch}.pth')
+        torch.save(model.state_dict(),f'{config["log_dir"]}/models/model_{epoch}.pth')
 
     fig=plt.figure()
     train_loss=[loss for loss in train_loss]
     validation_loss=[loss for loss in validation_loss]
     x_train=list(range(len(train_loss)))
-    x_val=[x for x in range(max_epoch) if (x + 1) % args.val_interval == 0]
+    x_val=[x for x in range(max_epoch) if (x + 1) % config["val_interval"] == 0]
     plt.plot(x_train,train_loss)
     plt.plot(x_val,validation_loss)
 
-    fig.savefig(f'{args.log_dir}/loss.png')
+    fig.savefig(f'{config["log_dir"]}/loss.png')
     
     
 
@@ -173,5 +172,5 @@ if __name__ == '__main__':
     logger_setup(args)
     
     config.update(vars(args))
-
+    
     main(config)
