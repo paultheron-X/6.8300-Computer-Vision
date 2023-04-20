@@ -39,7 +39,7 @@ def process_video(video_folder):
 
     # save the cropped video as a succession of images
     if 'GOOGLE_COLAB' in os.environ:
-        saving_path = '/content/6.8300-Computer-Vision/data/processed'
+        saving_path = os.path.join(video_folder.replace('raw/train/train_orig', 'processed'))
     else:
         saving_path = os.path.join(video_folder.replace('raw', 'processed'))
     os.makedirs(saving_path, exist_ok=True)
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # and we need to mount the Google Drive
     if 'GOOGLE_COLAB' in os.environ:
         print('Running on Colab')
-        raw_data_folder = '/content/drive/content/drive/MyDrive/data_vision/raw/train_orig/train'
+        raw_data_folder = '/content/drive/MyDrive/data_vision/raw/train/train_orig'
     else:
         print('Running locally')
         raw_data_folder = '../../../data/raw/train_orig'
