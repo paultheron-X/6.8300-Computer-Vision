@@ -2,7 +2,7 @@
 
 echo "Downloading REDS data from website https://seungjunnah.github.io/Datasets/reds.html"
 
-mkdir -r /Data/reds_dataset/raw/train_orig
+mkdir -p /Data/reds_dataset/raw/train_orig
 
 
 for i in {0..15}; do
