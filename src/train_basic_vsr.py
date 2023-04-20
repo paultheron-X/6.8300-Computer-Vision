@@ -41,23 +41,22 @@ def main(config):
     logging.info("Loading data")
     logging.debug(f"Creating dataset from path: {config['data_path']}")
     
-    dataset = VideoDataset(
+    train_dataset = VideoDataset(
         data_dir=config["data_path"], rolling_window=config["rolling_window"]
+    )
+    test_dataset = VideoDataset(
+        data_dir=config["data_path"], rolling_window=config["rolling_window"], is_test=True
     )
     
     if config['prepare_data']:
-        dataset.prepare_data()
+        train_dataset.prepare_data() # will prepare for all
     
-    logging.debug(f"Splitting 90/10 train/test") 
-    train_size = int(0.9 * len(dataset))
-    test_size = len(dataset) - train_size
-    train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
     
 
     logging.debug(f"Creating train and test dataloaders")
     train_loader = DataLoader(
         train_dataset,
-        batch_size=8,
+        batch_size=config['batch_size'],
         shuffle=True,
     )
     test_loader = DataLoader(
@@ -107,7 +106,8 @@ def main(config):
                 gt_sequences, lq_sequences = Variable(data[1]),Variable(data[0])
                 gt_sequences=gt_sequences.to(device)
                 lq_sequences=lq_sequences.to(device)
-
+                
+                print(lq_sequences.shape)
                 pred_sequences = model(lq_sequences)
                 loss = criterion(pred_sequences, gt_sequences)
                 epoch_loss += loss.item()
