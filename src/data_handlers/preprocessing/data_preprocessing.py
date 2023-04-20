@@ -14,8 +14,6 @@ import argparse
 
 #I downloaded the REDS data for video superresolution I want to crop a 512 512 video in the middle of each frame n python, how can I do it
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--data_path', type=str, default='data/REDS/train_sharp_bicubic/X4')
 
 def process_video(video_folder):
     # load the video (all the frames contained in the folder) read only one frame every 4
@@ -40,7 +38,10 @@ def process_video(video_folder):
 
 
     # save the cropped video as a succession of images
-    saving_path = os.path.join(video_folder.replace('raw/train_orig', 'processed'))
+    if 'GOOGLE_COLAB' in os.environ:
+        saving_path = '/content/6.8300-Computer-Vision/data/processed'
+    else:
+        saving_path = os.path.join(video_folder.replace('raw', 'processed'))
     os.makedirs(saving_path, exist_ok=True)
     for i, img in enumerate(cropped_video):
         # save it like this: frame_0000.png, frame_0001.png, ..
@@ -48,11 +49,16 @@ def process_video(video_folder):
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
-    raw_data_folder = args.data_path
+    # if the variable GOOGLE_COLAB is set to True, we are in Google Colab
+    # and we need to mount the Google Drive
+    if 'GOOGLE_COLAB' in os.environ:
+        print('Running on Colab')
+        raw_data_folder = '/content/drive/content/drive/MyDrive/data_vision/raw/train_orig/train'
+    else:
+        print('Running locally')
+        raw_data_folder = '../../../data/raw/train_orig'
+
     # iterate over all the videos with fancy progress bar
     for video_folder in tqdm(sorted(os.listdir(raw_data_folder))):
         process_video(os.path.join(raw_data_folder, video_folder))
-
-
 
