@@ -127,7 +127,7 @@ class VideoDataset(Dataset):
     def read_image(self, path):
         with Image.open(path) as img:
             img = TF.ToTensor()(img)
-            img = TF.Resize(self.img_size)(img)
+            #img = TF.Resize(self.img_size)(img)
             return img
 
 
