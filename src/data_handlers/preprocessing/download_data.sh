@@ -20,3 +20,5 @@ wget -c http://data.cv.snu.ac.kr:8008/webdav/dataset/REDS/orig/train_orig_part1.
 unzip ./data/raw/train_orig_part1.zip -d ./data/raw
 
 cp ./data/raw/train_orig_part1/train_orig/* ./data/raw/train_orig
+
+
