@@ -27,3 +27,6 @@ def logger_setup(args):
     }
 
     coloredlogs.install(**config)
+    
+    pil_logger = logging.getLogger('PIL')
+    pil_logger.setLevel(logging.INFO)

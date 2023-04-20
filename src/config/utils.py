@@ -25,6 +25,7 @@ def get_config(config_parser):
     fill_config_with(config, config_parser, str, 'dataset', 'DATA_PATH')
     fill_config_with(config, config_parser, str, 'dataset', 'GT_DIR')
     fill_config_with(config, config_parser, str, 'dataset', 'LQ_DIR')
+    fill_config_with(config, config_parser, int, 'dataset', 'PREPARE_DATA')
     
     #data
     fill_config_with(config, config_parser, int, 'data', 'ROLLING_WINDOW')
