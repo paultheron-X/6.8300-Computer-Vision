@@ -23,6 +23,9 @@ def get_config(config_parser):
     
     #dataset
     fill_config_with(config, config_parser, str, 'dataset', 'DATA_PATH')
+    if 'GOOGLE_COLAB' in os.environ:
+        config['data_path'] = config['data_path'].replace('data', '/content/drive/MyDrive/data_vision')
+    
     fill_config_with(config, config_parser, str, 'dataset', 'GT_DIR')
     fill_config_with(config, config_parser, str, 'dataset', 'LQ_DIR')
     fill_config_with(config, config_parser, int, 'dataset', 'PREPARE_DATA')
