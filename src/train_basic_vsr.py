@@ -50,7 +50,8 @@ def main(config):
         is_test=True,
     )
 
-    if config["prepare_data"]:
+    # if config prepare data is true, prepare the data, or if the data is not prepared
+    if config["prepare_data"] or not os.path.exists(os.path.join(config["data_path"], "downsampled")):
         train_dataset.prepare_data()  # will prepare for all
 
     logging.debug(f"Creating train and test dataloaders")
