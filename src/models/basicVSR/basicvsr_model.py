@@ -6,7 +6,7 @@ https://github.com/open-mmlab/mmediting
 import torch
 from torch import nn
 
-from .SPyNet import SPyNet
+from .SPyNet import SPyNet, get_spynet
 from .modules import PixelShuffle,ResidualBlocksWithInputConv,flow_warp
 
 class basicVSR(nn.Module):
@@ -16,7 +16,7 @@ class basicVSR(nn.Module):
         self.mid_channels = mid_channels
 
         #alignment(optical flow network)
-        self.spynet = self.get_spynet(spynet_pretrained)
+        self.spynet = get_spynet(spynet_pretrained)
         
         #propagation
         self.backward_resblocks=ResidualBlocksWithInputConv(mid_channels + 3, mid_channels, num_blocks)
@@ -32,19 +32,6 @@ class basicVSR(nn.Module):
 
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-
-    def get_spynet(self,pretrained):
-        model=SPyNet()
-        if pretrained:
-            model_p=model.state_dict()
-            pre_p=torch.load(pretrained)
-            ppl=list(pre_p)
-            for i,k in enumerate(model_p.keys()):
-                if i<2:
-                    continue
-                model_p[k]=pre_p[ppl[i-2]]
-            model.load_state_dict(model_p)
-        return model
     
     def check_if_mirror_extended(self, lrs):
         """Check whether the input is a mirror-extended sequence.

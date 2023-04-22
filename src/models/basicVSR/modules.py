@@ -61,6 +61,18 @@ def make_itrblocks(block, num_blocks, **kwarg):
         layers.append(block(**kwarg))
     return nn.Sequential(*layers)
 
+def constant_init(module, val, bias=0):
+    """Initialize module parameters with constant values.
+    Args:
+        module (nn.Module): Module to be initialized.
+        val (float or int): Constant value.
+        bias (float or int): Constant bias. Default: 0.
+    """
+    if hasattr(module, 'weight') and module.weight is not None:
+        nn.init.constant_(module.weight, val)
+    if hasattr(module, 'bias') and module.bias is not None:
+        nn.init.constant_(module.bias, bias)
+
 class ResidualBlocksWithInputConv(nn.Module):
     """Residual blocks with a convolution in front.
     Args:

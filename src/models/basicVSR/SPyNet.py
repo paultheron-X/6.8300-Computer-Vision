@@ -163,3 +163,16 @@ class SPyNetBasicModule(nn.Module):
             Tensor: Refined flow with shape (b, 2, h, w)
         """
         return self.basic_module(tensor_input)
+
+def get_spynet(pretrained):
+        model=SPyNet()
+        if pretrained:
+            model_p=model.state_dict()
+            pre_p=torch.load(pretrained)
+            ppl=list(pre_p)
+            for i,k in enumerate(model_p.keys()):
+                if i<2:
+                    continue
+                model_p[k]=pre_p[ppl[i-2]]
+            model.load_state_dict(model_p)
+        return model
