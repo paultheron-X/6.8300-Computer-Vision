@@ -41,7 +41,7 @@ def process_video(video_folder):
     if 'GOOGLE_COLAB' in os.environ:
         saving_path = os.path.join(video_folder.replace('raw/train/train_orig', 'processed'))
     else:
-        saving_path = os.path.join(video_folder.replace('raw', 'processed'))
+        saving_path = os.path.join(video_folder.replace('raw/train_orig', 'processed'))
     os.makedirs(saving_path, exist_ok=True)
     for i, img in enumerate(cropped_video):
         # save it like this: frame_0000.png, frame_0001.png, ..
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         raw_data_folder = '/content/drive/MyDrive/data_vision/raw/train/train_orig'
     else:
         print('Running locally')
-        raw_data_folder = '../../../data/raw/train_orig'
+        raw_data_folder = 'data/raw/train_orig'
 
     # iterate over all the videos with fancy progress bar
     for video_folder in tqdm(sorted(os.listdir(raw_data_folder))):
