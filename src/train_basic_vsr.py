@@ -106,6 +106,9 @@ def main(config):
                 lq_sequences = lq_sequences.to(device)
 
                 pred_sequences = model(lq_sequences)
+                mid_frame = config["rolling_window"] // 2
+                pred_sequences = pred_sequences[:,mid_frame,:,:,:] # TODO challenge that: shuld e compute the loss on all the reconstructed frames ??
+                
                 loss = criterion(pred_sequences, gt_sequences)
                 epoch_loss += loss.item()
                 # epoch_psnr += 10 * log10(1 / loss.data)
