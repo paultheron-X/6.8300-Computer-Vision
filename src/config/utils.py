@@ -43,6 +43,7 @@ def get_config(config_parser):
     
     #model
     fill_config_with(config, config_parser, str, 'model', 'SPYNET_PRETRAINED')
+    fill_config_with(config, config_parser, str, 'model', 'BASIC_VSR_PRETRAINED')
     #fill_config_with(config, config_parser, int, 'model', 'EMBEDDING_SIZE')
     #fill_config_with(config, config_parser, json.loads, 'model', 'LAYERS')
   

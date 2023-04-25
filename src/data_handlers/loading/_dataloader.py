@@ -12,6 +12,8 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import numpy as np
 
+from torchvision.io import read_image
+
 import glob
 import random
 from tqdm import tqdm
@@ -29,9 +31,9 @@ class VideoDataset(Dataset):
         self.rolling_window = rolling_window
 
         self.total_keys = sorted(os.listdir(data_dir))
-        self.total_keys = [i for i in self.total_keys if "downsampled" not in i]
+        self.total_keys = [i for i in self.total_keys if i not in ["downsampled", "fimg", "big_crop"]]
 
-        val_keys = ["031", "042"]  # ['000', '011', '015', '020']
+        val_keys = ['000', '001', '002', '003'] #['000', '011', '015', '020']
         if is_test:
             self.keys = [i for i in self.total_keys if i in val_keys]
         else:
@@ -55,7 +57,7 @@ class VideoDataset(Dataset):
         }
 
     def prepare_data(self):
-        """Prepare data for training, this will down sample the images and save them
+        """Prepare data for training, this will down sample the images and save them 
         Args:
             None
         Returns:
@@ -70,7 +72,7 @@ class VideoDataset(Dataset):
             images = [
                 img_dir
                 for img_dir in sorted(os.listdir(os.path.join(self.data_dir, key)))
-                if "downsampled" not in img_dir
+                if img_dir not in ["downsampled", "fimg", "big_crop"]
             ]
             for file in images:
                 with Image.open(os.path.join(self.data_dir, key, file)) as img:
@@ -102,12 +104,12 @@ class VideoDataset(Dataset):
             + 1
         ]
         # gt_image
-        gt_image = self.read_image(
-            os.path.join(self.data_dir, key, f"frame_{file_idx:04d}.png")
-        )
+        gt_image = read_image(
+            os.path.join(self.data_dir, key, f"frame_{file_idx:04d}.png") 
+        ) / 255
         # read the images
         # TODO: add the transforms
-        imgs = [self.read_image(file_name) for file_name in file_names]
+        imgs = [read_image(file_name)/255 for file_name in file_names]
         # stack the images
         train_imgs = torch.stack(imgs)  # (t, c, h, w)
         return train_imgs, gt_image
@@ -124,11 +126,6 @@ class VideoDataset(Dataset):
                 index -= self.num_files_per_key[key] - self.rolling_window + 1
         raise ValueError("Index out of range")
 
-    def read_image(self, path):
-        with Image.open(path) as img:
-            img = TF.ToTensor()(img)
-            #img = TF.Resize(self.img_size)(img)
-            return img
 
 
 def generate_segment_indices(

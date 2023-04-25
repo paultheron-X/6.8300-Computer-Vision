@@ -131,3 +131,6 @@ dmypy.json
 REDS/*
 .vscode
 private_script.txt
+
+experiments/*
+*.png

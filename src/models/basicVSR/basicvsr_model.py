@@ -9,8 +9,10 @@ from torch import nn
 from .SPyNet import SPyNet, get_spynet
 from .modules import PixelShuffle,ResidualBlocksWithInputConv,flow_warp
 
+import logging
+
 class basicVSR(nn.Module):
-    def __init__(self,scale_factor=4, mid_channels=64, num_blocks=30, spynet_pretrained=None):
+    def __init__(self,scale_factor=4, mid_channels=64, num_blocks=30, spynet_pretrained=None, pretrained_model = None):
         super().__init__()
         self.scale_factor=scale_factor
         self.mid_channels = mid_channels
@@ -32,6 +34,22 @@ class basicVSR(nn.Module):
 
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+        
+        if pretrained_model is not None:
+            if pretrained_model != 'False':
+                self.load_pretrained_weights(torch.load(pretrained_model))
+                logging.debug(f"Loaded pretrained weights from {pretrained_model}")
+            
+    def load_pretrained_weights(self, weights_pret):
+        model_keys = [k for k in self.state_dict().keys()]
+        pretrained_keys = [k for k in weights_pret['state_dict'].keys()]
+        
+        new_dict = {}
+        for i,a in enumerate(model_keys):
+            new_dict[a] = weights_pret['state_dict'][pretrained_keys[i]]
+        
+        self.load_state_dict(new_dict, strict=True)
+        
     
     def check_if_mirror_extended(self, lrs):
         """Check whether the input is a mirror-extended sequence.
