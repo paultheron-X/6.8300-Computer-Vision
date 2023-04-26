@@ -8,24 +8,15 @@ from utils.arguments_parser import args_parser
 from config import return_config
 
 import os
-import argparse
-from typing import OrderedDict
-from tqdm import tqdm
-import matplotlib.pyplot as plt
-from math import log10
-from PIL import Image
 
 import torch
 from torch import nn
-from torch.autograd import Variable
-from torchvision.utils import save_image
 from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from data_handlers.loading import VideoDataset
 from models import basicVSR
-from utils.loss import CharbonnierLoss
-from utils.utils_general import resize_sequences
+
+from utils.tester import test_loop
 
 
 def main(config):
@@ -39,7 +30,6 @@ def main(config):
     logging.info("Starting main training script")
 
     logging.info("Loading test data")
-    #logging.debug(f"Creating dataset from path: {config['data_path']}")
 
     
     test_dataset = VideoDataset(
@@ -60,55 +50,8 @@ def main(config):
     os.makedirs(f'{config["log_dir"]}/images', exist_ok=True)
 
     logging.info("Starting testing")
-    for epoch in range(max_epoch):
-        logging.debug(f"Starting validation at epoch {epoch+1}")
-        model.eval()
-        val_psnr, lq_psnr = 0, 0
-        os.makedirs(f'{config["log_dir"]}/images/epoch{epoch+1:05}', exist_ok=True)
-        with torch.no_grad():
-            with tqdm(test_loader, ncols=100) as pbar:
-                for idx, data in enumerate(pbar):
-                    gt_sequences, lq_sequences = Variable(data[1]), Variable(data[0])
-                    gt_sequences = gt_sequences.to(device)
-                    lq_sequences = lq_sequences.to(device)
-                    pred_sequences = model(lq_sequences)
-                    lq_mid = resize_sequences(
-                        lq_sequences, (gt_sequences.size(dim=2), gt_sequences.size(dim=3))
-                    )
-                    mid_frame = config["rolling_window"] // 2
-                    pred_sequences = pred_sequences[:,mid_frame,:,:,:]
-                    
-                    lq_mid = lq_mid[:,mid_frame,:,:,:]
-                    
-                    
-                    val_mse = criterion_mse(pred_sequences, gt_sequences)
-                    lq_mse = criterion_mse(lq_mid, gt_sequences)
-                    val_psnr += 10 * log10(1 / val_mse.data)
-                    lq_psnr += 10 * log10(1 / lq_mse.data)
-                    pbar.set_description(
-                        f"PSNR:{val_psnr / (idx + 1):.2f},(lq:{lq_psnr/(idx + 1):.2f})"
-                    )
-                    
-                    save_image(
-                        pred_sequences[0],
-                        f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png',
-                        nrow=5,
-                    )
-                    save_image(
-                        lq_mid[0],
-                        f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_LQ.png',
-                        nrow=5,
-                    )
-                    save_image(
-                        gt_sequences[0],
-                        f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_GT.png',
-                        nrow=5,
-                    )
 
-        logging.info(
-            f"==[validation]== PSNR:{val_psnr / len(test_loader):.2f},(lq:{lq_psnr/len(test_loader):.2f})"
-        )
-        torch.save(model.state_dict(), f'{config["log_dir"]}/models/model_{epoch}.pth')
+    model = test_loop(model, max_epoch, config, device, test_loader, criterion_mse)
 
 
 if __name__ == "__main__":

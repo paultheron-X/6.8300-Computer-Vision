@@ -27,6 +27,9 @@ from models import basicVSR
 from utils.loss import CharbonnierLoss
 from utils.utils_general import resize_sequences
 
+from utils.tester import test_loop
+from utils.trainer import train_loop
+
 
 def main(config):
     # set the seeds
@@ -39,22 +42,35 @@ def main(config):
     logging.info("Starting main training script")
 
     logging.info("Loading data")
-    logging.debug(f"Creating dataset from path: {config['data_path']}")
+    logging.debug(f"Creating dataset from path: {config['lr_data_dir']}")
 
     train_dataset = VideoDataset(
-        data_dir=config["data_path"], rolling_window=config["rolling_window"]
+        lr_data_dir=config["lr_data_dir"],
+        hr_data_dir=config["hr_data_dir"],
+        rolling_window=config["rolling_window"]
     )
     test_dataset = VideoDataset(
-        data_dir=config["data_path"],
+        lr_data_dir=config["lr_data_dir"],
+        hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         is_test=True,
+        is_small_test=False
     )
+    
+    val_dataset = VideoDataset(
+        lr_data_dir=config["lr_data_dir"],
+        hr_data_dir=config["hr_data_dir"],
+        rolling_window=config["rolling_window"],
+        is_test=True,
+        is_small_test=True)
 
     logging.debug(f"Creating train and test dataloaders")
     train_loader = DataLoader(
         train_dataset, batch_size=config["batch_size"], shuffle=True
     )
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
+    
     model = basicVSR(spynet_pretrained=config["spynet_pretrained"]).to(device)
 
     criterion = CharbonnierLoss().to(device)
@@ -94,73 +110,24 @@ def main(config):
             # train all the parameters
             model.requires_grad_(True)
 
-        epoch_loss = 0
-        with tqdm(train_loader, ncols=100) as pbar:
-            for idx, data in enumerate(pbar):
-                gt_sequences, lq_sequences = Variable(data[1]), Variable(data[0])
-                gt_sequences = gt_sequences.to(device)
-                lq_sequences = lq_sequences.to(device)
-
-                pred_sequences = model(lq_sequences)
-                mid_frame = config["rolling_window"] // 2
-                pred_sequences = pred_sequences[:,mid_frame,:,:,:] # TODO challenge that: shuld e compute the loss on all the reconstructed frames ??
-                
-                loss = criterion(pred_sequences, gt_sequences)
-                epoch_loss += loss.item()
-                # epoch_psnr += 10 * log10(1 / loss.data)
-
-                loss.backward()
-                optimizer.step()
-                scheduler.step()
-
-                pbar.set_description(f"[Epoch {epoch+1}]")
-                pbar.set_postfix(OrderedDict(loss=f"{loss.data:.3f}"))
-
-            train_loss.append(epoch_loss / len(train_loader))
-
+        epoch_loss, model = train_loop(
+            model, epoch, config, device, train_loader, criterion, optimizer, scheduler
+        )
+        
+        train_loss.append(epoch_loss / len(train_loader))
         if (epoch + 1) % config["val_interval"] != 0:
             continue
 
         logging.debug(f"Starting validation at epoch {epoch+1}")
-        model.eval()
-        val_psnr, lq_psnr = 0, 0
-        os.makedirs(f'{config["log_dir"]}/images/epoch{epoch+1:05}', exist_ok=True)
-        with torch.no_grad():
-            for idx, data in enumerate(test_loader):
-                gt_sequences, lq_sequences = data
-                gt_sequences = gt_sequences.to(device)
-                lq_sequences = lq_sequences.to(device)
-                pred_sequences = model(lq_sequences)
-                lq_sequences = resize_sequences(
-                    lq_sequences, (gt_sequences.size(dim=3), gt_sequences.size(dim=4))
-                )
-                val_mse = criterion_mse(pred_sequences, gt_sequences)
-                lq_mse = criterion_mse(lq_sequences, gt_sequences)
-                val_psnr += 10 * log10(1 / val_mse.data)
-                lq_psnr += 10 * log10(1 / lq_mse.data)
 
-                save_image(
-                    pred_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png',
-                    nrow=5,
-                )
-                save_image(
-                    lq_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_LQ.png',
-                    nrow=5,
-                )
-                save_image(
-                    gt_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_GT.png',
-                    nrow=5,
-                )
-
-            validation_loss.append(epoch_loss / len(test_loader))
-
-        logging.info(
-            f"==[validation]== PSNR:{val_psnr / len(test_loader):.2f},(lq:{lq_psnr/len(test_loader):.2f})"
-        )
-        torch.save(model.state_dict(), f'{config["log_dir"]}/models/model_{epoch}.pth')
+        # with val loader it is fast eval
+        val_loss, model = test_loop(model, max_epoch, config, device, val_loader, criterion_mse)
+        
+        if epoch%10 == 0 and epoch != 0:
+            # we run a full eval on the test set
+            _ , model = test_loop(model, max_epoch, config, device, test_loader, criterion_mse)
+        
+        validation_loss.append(val_loss / len(val_loader))
 
     fig = plt.figure()
     train_loss = [loss for loss in train_loss]

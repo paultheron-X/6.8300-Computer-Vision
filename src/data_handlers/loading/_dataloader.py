@@ -23,23 +23,30 @@ from utils.arguments_parser import data_loading_parser
 
 
 class VideoDataset(Dataset):
-    def __init__(self, lr_data_dir, hr_data_dir, is_test=False, img_size=(512, 512), rolling_window=5):
-        self.lr_data_dir = lr_data_dir
-        self.hr_data_dir = hr_data_dir
-        self
-        self.img_size = img_size
+    def __init__(self, lr_data_dir, hr_data_dir, is_test=False, is_small_test = False, rolling_window=5):
+        
+        if not is_test: # always put the training folder as input
+            self.lr_data_dir = lr_data_dir
+            self.hr_data_dir = hr_data_dir
+        else:
+            self.lr_data_dir = lr_data_dir.replace("train", "val")
+            self.hr_data_dir = hr_data_dir.replace("train", "val")
+        
         if rolling_window % 2 == 0:
             raise ValueError("Rolling window must be odd")
+        
+        self.is_test = is_test
+        
         self.rolling_window = rolling_window
-
-        self.total_keys = sorted(os.listdir(lr_data_dir))
+        
+        self.total_keys = sorted(os.listdir(self.lr_data_dir))
         self.total_keys = [i for i in self.total_keys if i not in ["downsampled", "fimg", "big_crop"]]
 
-        val_keys = ['000', '001', '002', '003']
-        if is_test:
-            self.keys = [i for i in self.total_keys if i in val_keys]
+        small_val_keys = ['000', '010', '020', '029']
+        if is_small_test:
+            self.keys = small_val_keys
         else:
-            self.keys = [i for i in self.total_keys if i not in val_keys]
+            self.keys = self.total_keys
 
         self.files_per_key = {
             key: sorted(
@@ -47,12 +54,6 @@ class VideoDataset(Dataset):
             )  # get all the files in the key directory
             for key in self.keys
         }
-        # process files per key to add 'processed' dir before the file name
-        #for key in self.keys:
-        #    self.files_per_key[key] = [
-        #        os.path.join(self.lr_data_dir, "downsampled", key, file)
-        #        for file in self.files_per_key[key]
-        #    ]
 
         self.num_files_per_key = {
             key: len(self.files_per_key[key]) for key in self.keys
@@ -76,16 +77,22 @@ class VideoDataset(Dataset):
             + 1
         ]
         # gt_image
-        gt_image = read_image(
-            os.path.join(self.hr_data_dir, key, f"{file_idx:08d}.png") 
-        ) / 255
+        gt_images = [
+            read_image(os.path.join(self.hr_data_dir, key, file_name)) / 255 for file_name in file_names
+        ]
+        gt_images_tensor = torch.stack(gt_images)
         # read the images
-        # TODO: add the transforms
-        imgs = [read_image(
-            os.path.join(self.lr_data_dir, key, file_name))/255 for file_name in file_names]
+        lr_images = [read_image(
+            os.path.join(self.lr_data_dir, key, file_name)) /255 for file_name in file_names]
         # stack the images
-        train_imgs = torch.stack(imgs)  # (t, c, h, w)
-        return train_imgs, gt_image
+        lr_images_tensor = torch.stack(lr_images)  # (t, c, h, w)
+        
+        
+        if not self.is_test:
+            # TODO Here: Add the transforms
+            pass
+        
+        return lr_images_tensor, gt_images_tensor
 
     def get_key_and_file_idx(self, index):
         # get the key and the index of the file in the key
@@ -99,38 +106,6 @@ class VideoDataset(Dataset):
                 index -= self.num_files_per_key[key] - self.rolling_window + 1
         raise ValueError("Index out of range")
     
-    def prepare_data(self):
-        """Prepare data for training, this will down sample the images and save them 
-        Args:
-            None
-        Returns:
-            None
-        """
-        raise NotImplementedError
-        logging.info("Preparing data")
-        for key in tqdm(self.total_keys):
-            save_path = os.path.join(self.lr_data_dir, "downsampled", key)
-            os.makedirs(save_path, exist_ok=True)
-
-            # now we downsample the images
-            images = [
-                img_dir
-                for img_dir in sorted(os.listdir(os.path.join(self.lr_data_dir, key)))
-                if img_dir not in ["downsampled", "fimg", "big_crop"]
-            ]
-            for file in images:
-                with Image.open(os.path.join(self.lr_data_dir, key, file)) as img:
-                    img = torch.nn.functional.interpolate(
-                        TF.ToTensor()(img).unsqueeze(0),
-                        scale_factor=1 / 4,
-                        mode="bicubic",
-                    )
-                    # save the downsampled image in the parent directory, with the name downsampled_{original_name}
-                    img = img.squeeze(0)
-                    img = TF.ToPILImage()(img)
-                    img.save(os.path.join(save_path, f"{os.path.basename(file)}"))
-
-
 
 def generate_segment_indices(
     videopath1, videopath2, num_input_frames=10, filename_tmpl="{:08d}.png"
