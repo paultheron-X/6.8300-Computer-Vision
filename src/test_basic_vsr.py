@@ -39,17 +39,15 @@ def main(config):
     logging.info("Starting main training script")
 
     logging.info("Loading test data")
-    logging.debug(f"Creating dataset from path: {config['data_path']}")
+    #logging.debug(f"Creating dataset from path: {config['data_path']}")
 
     
     test_dataset = VideoDataset(
-        data_dir=config["data_path"],
+        lr_data_dir=config["lr_data_dir"],
+        hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         is_test=True,
     )
-
-    if config["prepare_data"] or not os.path.exists(os.path.join(config["data_path"], "downsampled")):
-        test_dataset.prepare_data()  # will prepare for all
 
     logging.debug(f"Creating train and test dataloaders")
     
@@ -87,6 +85,9 @@ def main(config):
                     lq_mse = criterion_mse(lq_mid, gt_sequences)
                     val_psnr += 10 * log10(1 / val_mse.data)
                     lq_psnr += 10 * log10(1 / lq_mse.data)
+                    pbar.set_description(
+                        f"PSNR:{val_psnr / (idx + 1):.2f},(lq:{lq_psnr/(idx + 1):.2f})"
+                    )
                     
                     save_image(
                         pred_sequences[0],
