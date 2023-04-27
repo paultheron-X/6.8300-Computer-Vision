@@ -44,33 +44,28 @@ def main(config):
     logging.info("Loading data")
     logging.debug(f"Creating dataset from path: {config['lr_data_dir']}")
 
-    train_dataset = VideoDataset(
-        lr_data_dir=config["lr_data_dir"],
-        hr_data_dir=config["hr_data_dir"],
-        rolling_window=config["rolling_window"]
-    )
+    train_dataset = VideoDataset(lr_data_dir=config["lr_data_dir"], hr_data_dir=config["hr_data_dir"], rolling_window=config["rolling_window"])
     test_dataset = VideoDataset(
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         is_test=True,
-        is_small_test=False
+        is_small_test=False,
     )
-    
+
     val_dataset = VideoDataset(
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         is_test=True,
-        is_small_test=True)
+        is_small_test=True,
+    )
 
     logging.debug(f"Creating train and test dataloaders")
-    train_loader = DataLoader(
-        train_dataset, batch_size=config["batch_size"], shuffle=True
-    )
+    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
-    
+
     model = basicVSR(spynet_pretrained=config["spynet_pretrained"]).to(device)
 
     criterion = CharbonnierLoss().to(device)
@@ -110,10 +105,8 @@ def main(config):
             # train all the parameters
             model.requires_grad_(True)
 
-        epoch_loss, model = train_loop(
-            model, epoch, config, device, train_loader, criterion, optimizer, scheduler
-        )
-        
+        epoch_loss, model = train_loop(model, epoch, config, device, train_loader, criterion, optimizer, scheduler)
+
         train_loss.append(epoch_loss / len(train_loader))
         if (epoch + 1) % config["val_interval"] != 0:
             continue
@@ -122,11 +115,11 @@ def main(config):
 
         # with val loader it is fast eval
         val_loss, model = test_loop(model, max_epoch, config, device, val_loader, criterion_mse)
-        
-        if epoch%10 == 0 and epoch != 0:
+
+        if epoch % 10 == 0 and epoch != 0:
             # we run a full eval on the test set
-            _ , model = test_loop(model, max_epoch, config, device, test_loader, criterion_mse)
-        
+            _, model = test_loop(model, max_epoch, config, device, test_loader, criterion_mse)
+
         validation_loss.append(val_loss / len(val_loader))
 
     fig = plt.figure()

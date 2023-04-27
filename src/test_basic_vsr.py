@@ -31,23 +31,24 @@ def main(config):
 
     logging.info("Loading test data")
 
-    
     test_dataset = VideoDataset(
-        lr_data_dir=config["lr_data_dir"],
-        hr_data_dir=config["hr_data_dir"],
-        rolling_window=config["rolling_window"],
-        is_test=True,
+        lr_data_dir=config["lr_data_dir"], hr_data_dir=config["hr_data_dir"], rolling_window=config["rolling_window"], is_test=True
     )
 
     logging.debug(f"Creating train and test dataloaders")
     
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
-    model = basicVSR(spynet_pretrained=config["spynet_pretrained"], pretrained_model=config["basic_vsr_pretrained"]).to(device)
+    if config["rolling_window"] == 25:
+        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False)
+    else:
+        test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    model = basicVSR(
+        spynet_pretrained=config["spynet_pretrained"], pretrained_model=config["basic_vsr_pretrained"], reset_spynet=config["reset_spynet"]
+    ).to(device)
     criterion_mse = nn.MSELoss().to(device)
     max_epoch = 1
 
-    os.makedirs(f'{config["log_dir"]}/models', exist_ok=True)
-    os.makedirs(f'{config["log_dir"]}/images', exist_ok=True)
+    os.makedirs(f'{config["result_dir"]}/models', exist_ok=True)
+    os.makedirs(f'{config["result_dir"]}/images', exist_ok=True)
 
     logging.info("Starting testing")
 

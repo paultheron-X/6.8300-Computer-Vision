@@ -17,7 +17,7 @@ from utils.utils_general import resize_sequences
 def test_loop(model, epoch, config, device, test_loader, criterion_mse):
     model.eval()
     val_psnr, lq_psnr = 0, 0
-    os.makedirs(f'{config["log_dir"]}/images/epoch{epoch+1:05}', exist_ok=True)
+    os.makedirs(f'{config["result_dir"]}/images/epoch{epoch+1:05}', exist_ok=True)
     with torch.no_grad():
         with tqdm(test_loader, ncols=100) as pbar:
             for idx, data in enumerate(pbar):
@@ -29,6 +29,11 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                     lq_sequences, pred_sequences.shape[-2:]
                 )
                 
+                # compute the loss only on the middle frame of the rolling window
+                mid_frame = pred_sequences.shape[1] // 2
+                pred_sequences = pred_sequences[:, mid_frame, :, :, :]
+                gt_sequences = gt_sequences[:, mid_frame, :, :, :]
+                lq_mid = lq_mid[:, mid_frame, :, :, :]
         
                 val_mse = criterion_mse(pred_sequences, gt_sequences)
                 lq_mse = criterion_mse(lq_mid, gt_sequences)
@@ -40,17 +45,17 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                 
                 save_image(
                     pred_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png',
+                    f'{config["result_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png',
                     nrow=5,
                 )
                 save_image(
                     lq_mid[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_LQ.png',
+                    f'{config["result_dir"]}/images/epoch{epoch+1:05}/{idx}_LQ.png',
                     nrow=5,
                 )
                 save_image(
                     gt_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_GT.png',
+                    f'{config["result_dir"]}/images/epoch{epoch+1:05}/{idx}_GT.png',
                     nrow=5,
                 )
                 val_loss = val_mse.item()
@@ -59,6 +64,9 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
             f"==[validation]== PSNR:{val_psnr / len(test_loader):.2f},(lq:{lq_psnr/len(test_loader):.2f})"
         )
         #TODO: Implement checkpoint saving (not at every epoch but keep the best one only)
-        torch.save(model.state_dict(), f'{config["log_dir"]}/models/model_{epoch}.pth')
-    
+        torch.save(model.state_dict(), f'{config["result_dir"]}/models/model_{epoch}.pth')
+        
+        # write the psnr to a file
+        with open(f'{config["result_dir"]}/psnr.txt', 'a') as f:
+            f.write(f'{epoch} {val_psnr / len(test_loader)}\n')
     return val_loss, model

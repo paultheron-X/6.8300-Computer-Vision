@@ -7,50 +7,54 @@ import torch
 from torch import nn
 
 from .SPyNet import SPyNet, get_spynet
-from .modules import PixelShuffle,ResidualBlocksWithInputConv,flow_warp
+from .modules import PixelShuffle, ResidualBlocksWithInputConv, flow_warp
 
 import logging
 
+
 class basicVSR(nn.Module):
-    def __init__(self,scale_factor=4, mid_channels=64, num_blocks=30, spynet_pretrained=None, pretrained_model = None):
+    def __init__(self, scale_factor=4, mid_channels=64, num_blocks=30, spynet_pretrained=None, pretrained_model=None, **kwargs):
         super().__init__()
-        self.scale_factor=scale_factor
+        self.scale_factor = scale_factor
         self.mid_channels = mid_channels
 
-        #alignment(optical flow network)
+        # alignment(optical flow network)
         self.spynet = get_spynet(spynet_pretrained)
-        
-        #propagation
-        self.backward_resblocks=ResidualBlocksWithInputConv(mid_channels + 3, mid_channels, num_blocks)
-        self.forward_resblocks=ResidualBlocksWithInputConv(mid_channels + 3, mid_channels, num_blocks)
 
-        #upsample
+        # propagation
+        self.backward_resblocks = ResidualBlocksWithInputConv(mid_channels + 3, mid_channels, num_blocks)
+        self.forward_resblocks = ResidualBlocksWithInputConv(mid_channels + 3, mid_channels, num_blocks)
+
+        # upsample
         self.fusion = nn.Conv2d(mid_channels * 2, mid_channels, 1, 1, 0, bias=True)
         self.upsample1 = PixelShuffle(mid_channels, mid_channels, 2, upsample_kernel=3)
         self.upsample2 = PixelShuffle(mid_channels, 64, 2, upsample_kernel=3)
         self.conv_hr = nn.Conv2d(64, 64, 3, 1, 1)
         self.conv_last = nn.Conv2d(64, 3, 3, 1, 1)
-        self.img_upsample = nn.Upsample(scale_factor=scale_factor, mode='bilinear', align_corners=False)
+        self.img_upsample = nn.Upsample(scale_factor=scale_factor, mode="bilinear", align_corners=False)
 
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        
+
         if pretrained_model is not None:
-            if pretrained_model != 'False':
+            if pretrained_model != "False":
                 self.load_pretrained_weights(torch.load(pretrained_model))
                 logging.debug(f"Loaded pretrained weights from {pretrained_model}")
-            
+
+        if kwargs['reset_spynet']:
+            logging.debug("Resetting SPyNet weights")
+            self.spynet = get_spynet(spynet_pretrained)  # we take the old spynet
+
     def load_pretrained_weights(self, weights_pret):
         model_keys = [k for k in self.state_dict().keys()]
-        pretrained_keys = [k for k in weights_pret['state_dict'].keys()]
-        
+        pretrained_keys = [k for k in weights_pret["state_dict"].keys()]
+
         new_dict = {}
-        for i,a in enumerate(model_keys):
-            new_dict[a] = weights_pret['state_dict'][pretrained_keys[i]]
-        
+        for i, a in enumerate(model_keys):
+            new_dict[a] = weights_pret["state_dict"][pretrained_keys[i]]
+
         self.load_state_dict(new_dict, strict=True)
-        
-    
+
     def check_if_mirror_extended(self, lrs):
         """Check whether the input is a mirror-extended sequence.
         If mirror-extended, the i-th (i=0, ..., t-1) frame is equal to the
@@ -64,7 +68,7 @@ class basicVSR(nn.Module):
             lrs_1, lrs_2 = torch.chunk(lrs, 2, dim=1)
             if torch.norm(lrs_1 - lrs_2.flip(1)) == 0:
                 self.is_mirror_extended = True
-    
+
     def compute_flow(self, lrs):
         """Compute optical flow using SPyNet for feature warping.
         Note that if the input is an mirror-extended sequence, 'flows_forward'
@@ -100,9 +104,7 @@ class basicVSR(nn.Module):
         """
 
         n, t, c, h, w = lrs.size()
-        assert h >= 64 and w >= 64, (
-            'The height and width of inputs should be at least 64, '
-            f'but got {h} and {w}.')
+        assert h >= 64 and w >= 64, "The height and width of inputs should be at least 64, " f"but got {h} and {w}."
 
         # check whether the input is an extended sequence
         self.check_if_mirror_extended(lrs)

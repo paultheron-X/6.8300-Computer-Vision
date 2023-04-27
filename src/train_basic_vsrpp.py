@@ -41,23 +41,15 @@ def main(config):
     logging.info("Loading data")
     logging.debug(f"Creating dataset from path: {config['data_path']}")
 
-    train_dataset = VideoDataset(
-        data_dir=config["data_path"], rolling_window=config["rolling_window"]
-    )
-    test_dataset = VideoDataset(
-        data_dir=config["data_path"],
-        rolling_window=config["rolling_window"],
-        is_test=True,
-    )
+    train_dataset = VideoDataset(data_dir=config["data_path"], rolling_window=config["rolling_window"])
+    test_dataset = VideoDataset(data_dir=config["data_path"], rolling_window=config["rolling_window"], is_test=True)
 
     # if config prepare data is true, prepare the data, or if the data is not prepared
     if config["prepare_data"] or not os.path.exists(os.path.join(config["data_path"], "downsampled")):
         train_dataset.prepare_data()  # will prepare for all
 
     logging.debug(f"Creating train and test dataloaders")
-    train_loader = DataLoader(
-        train_dataset, batch_size=config["batch_size"], shuffle=True
-    )
+    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
     model = BasicVSRPlusPlus(spynet_pretrained=config["spynet_pretrained"]).to(device)
 
@@ -104,8 +96,10 @@ def main(config):
 
                 pred_sequences = model(lq_sequences)
                 mid_frame = config["rolling_window"] // 2
-                pred_sequences = pred_sequences[:,mid_frame,:,:,:] # TODO challenge that: shuld e compute the loss on all the reconstructed frames ??
-                
+                pred_sequences = pred_sequences[
+                    :, mid_frame, :, :, :
+                ]  # TODO challenge that: shuld e compute the loss on all the reconstructed frames ??
+
                 loss = criterion(pred_sequences, gt_sequences)
                 epoch_loss += loss.item()
                 # epoch_psnr += 10 * log10(1 / loss.data)
@@ -132,35 +126,19 @@ def main(config):
                 gt_sequences = gt_sequences.to(device)
                 lq_sequences = lq_sequences.to(device)
                 pred_sequences = model(lq_sequences)
-                lq_sequences = resize_sequences(
-                    lq_sequences, (gt_sequences.size(dim=3), gt_sequences.size(dim=4))
-                )
+                lq_sequences = resize_sequences(lq_sequences, (gt_sequences.size(dim=3), gt_sequences.size(dim=4)))
                 val_mse = criterion_mse(pred_sequences, gt_sequences)
                 lq_mse = criterion_mse(lq_sequences, gt_sequences)
                 val_psnr += 10 * log10(1 / val_mse.data)
                 lq_psnr += 10 * log10(1 / lq_mse.data)
 
-                save_image(
-                    pred_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png',
-                    nrow=5,
-                )
-                save_image(
-                    lq_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_LQ.png',
-                    nrow=5,
-                )
-                save_image(
-                    gt_sequences[0],
-                    f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_GT.png',
-                    nrow=5,
-                )
+                save_image(pred_sequences[0], f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png', nrow=5)
+                save_image(lq_sequences[0], f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_LQ.png', nrow=5)
+                save_image(gt_sequences[0], f'{config["log_dir"]}/images/epoch{epoch+1:05}/{idx}_GT.png', nrow=5)
 
             validation_loss.append(epoch_loss / len(test_loader))
 
-        logging.info(
-            f"==[validation]== PSNR:{val_psnr / len(test_loader):.2f},(lq:{lq_psnr/len(test_loader):.2f})"
-        )
+        logging.info(f"==[validation]== PSNR:{val_psnr / len(test_loader):.2f},(lq:{lq_psnr/len(test_loader):.2f})")
         torch.save(model.state_dict(), f'{config["log_dir"]}/models/model_{epoch}.pth')
 
     fig = plt.figure()
