@@ -133,4 +133,5 @@ REDS/*
 private_script.txt
 
 experiments/*
+results/*
 *.png

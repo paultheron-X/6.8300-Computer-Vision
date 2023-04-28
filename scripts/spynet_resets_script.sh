@@ -1,6 +1,6 @@
 
 
-for i in 3 5 25 
+for i in 25 
 do
     for j in 0 1 
     do

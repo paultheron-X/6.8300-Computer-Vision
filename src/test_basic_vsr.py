@@ -42,7 +42,7 @@ def main(config):
     else:
         test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
     model = basicVSR(
-        spynet_pretrained=config["spynet_pretrained"], pretrained_model=config["basic_vsr_pretrained"], reset_spynet=config["reset_spynet"]
+        spynet_pretrained=config["spynet_pretrained"], pretrained_model=config["basic_vsr_pretrained"], reset_spynet=config["reset_spynet"], optical_flow_module=config["optical_flow_module"]
     ).to(device)
     criterion_mse = nn.MSELoss().to(device)
     max_epoch = 1

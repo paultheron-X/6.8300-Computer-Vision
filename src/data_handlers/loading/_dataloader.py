@@ -23,7 +23,7 @@ from utils.arguments_parser import data_loading_parser
 
 
 class VideoDataset(Dataset):
-    def __init__(self, lr_data_dir, hr_data_dir, is_test=False, is_small_test = False, rolling_window=5):
+    def __init__(self, lr_data_dir, hr_data_dir, is_test=False, is_small_test = False, rolling_window=5, **kwargs):
         
         if not is_test: # always put the training folder as input
             self.lr_data_dir = lr_data_dir
@@ -48,16 +48,23 @@ class VideoDataset(Dataset):
         else:
             self.keys = self.total_keys
 
-        self.files_per_key = {
-            key: sorted(
-                os.listdir(os.path.join(self.lr_data_dir, key))
-            )  # get all the files in the key directory
-            for key in self.keys
-        }
+        if not 'skip_rolling' in kwargs.keys():
+            self.files_per_key = {
+                key: sorted(
+                    os.listdir(os.path.join(self.lr_data_dir, key))
+                )  # get all the files in the key directory
+                for key in self.keys
+            }
 
-        self.num_files_per_key = {
-            key: len(self.files_per_key[key]) for key in self.keys
-        }
+            self.num_files_per_key = {
+                key: len(self.files_per_key[key]) for key in self.keys
+            }
+        else:
+            # we will skip some frames in the dataset: 
+            # example: if we have a rolling window of 5, we would do:
+            # (f1 f2 f3 f4 f5) , then (f4 f5 f6 f7 f8) and so on + we calculate the loss only on the frames that are not on the side
+            # TODO: Implement
+            pass
 
     def __len__(self):
         # this dataset will extract batch of rolling_window frames from each video
@@ -87,6 +94,8 @@ class VideoDataset(Dataset):
         # stack the images
         lr_images_tensor = torch.stack(lr_images)  # (t, c, h, w)
         
+        lr_images_tensor = lr_images_tensor[:, :, 4:, :]
+        gt_images_tensor = gt_images_tensor[:, :, 16:, :]
         
         if not self.is_test:
             # TODO Here: Add the transforms

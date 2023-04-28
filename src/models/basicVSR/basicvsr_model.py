@@ -7,6 +7,7 @@ import torch
 from torch import nn
 
 from .SPyNet import SPyNet, get_spynet
+from ..optical_flow import get_raft
 from .modules import PixelShuffle, ResidualBlocksWithInputConv, flow_warp
 
 import logging
@@ -19,7 +20,15 @@ class basicVSR(nn.Module):
         self.mid_channels = mid_channels
 
         # alignment(optical flow network)
-        self.spynet = get_spynet(spynet_pretrained)
+        #self.optical_module = get_spynet(spynet_pretrained)
+        if kwargs['optical_flow_module'] == 'SPYNET':
+            self.optical_module = get_spynet(spynet_pretrained)
+        elif kwargs['optical_flow_module'] == 'RAFT':
+            self.optical_module = get_raft(small=False)
+        else:
+            raise NotImplementedError(f"Optical flow module {kwargs['optical_flow_module']} not implemented")
+        
+        self.optical_module_name = self.optical_module.__class__.__name__
 
         # propagation
         self.backward_resblocks = ResidualBlocksWithInputConv(mid_channels + 3, mid_channels, num_blocks)
@@ -43,15 +52,24 @@ class basicVSR(nn.Module):
 
         if kwargs['reset_spynet']:
             logging.debug("Resetting SPyNet weights")
-            self.spynet = get_spynet(spynet_pretrained)  # we take the old spynet
+            self.optical_module = get_spynet(spynet_pretrained)  # we take the old spynet
 
     def load_pretrained_weights(self, weights_pret):
         model_keys = [k for k in self.state_dict().keys()]
-        pretrained_keys = [k for k in weights_pret["state_dict"].keys()]
+        pretrained_keys = [k for k in weights_pret.keys()]
 
         new_dict = {}
-        for i, a in enumerate(model_keys):
-            new_dict[a] = weights_pret["state_dict"][pretrained_keys[i]]
+        if self.optical_module_name == "SPyNet":
+            for i, a in enumerate(model_keys):
+                new_dict[a] = weights_pret[a] # all the same
+        else:
+            # the optical flow network is raft: load the pretrained weights for the whole model,
+            # except for the optical flow network where we keep raft
+            for i, a in enumerate(model_keys):
+                if "optical_module" in a:
+                    new_dict[a] = self.state_dict()[a] # keep the raft weights
+                else:
+                    new_dict[a] = weights_pret[a] # all the same
 
         self.load_state_dict(new_dict, strict=True)
 
@@ -85,13 +103,21 @@ class basicVSR(nn.Module):
         n, t, c, h, w = lrs.size()
         lrs_1 = lrs[:, :-1, :, :, :].reshape(-1, c, h, w)
         lrs_2 = lrs[:, 1:, :, :, :].reshape(-1, c, h, w)
-
-        flows_backward = self.spynet(lrs_1, lrs_2).view(n, t - 1, 2, h, w)
+        
+        name = self.optical_module_name
+        
+        if name == "SPyNet":
+            flows_backward = self.optical_module(lrs_1, lrs_2).view(n, t - 1, 2, h, w)
+        else:
+            flows_backward = self.optical_module(lrs_1, lrs_2)[-1].view(n, t - 1, 2, h, w)
 
         if self.is_mirror_extended:  # flows_forward = flows_backward.flip(1)
             flows_forward = None
         else:
-            flows_forward = self.spynet(lrs_2, lrs_1).view(n, t - 1, 2, h, w)
+            if name == "SPyNet":
+                flows_forward = self.optical_module(lrs_2, lrs_1).view(n, t - 1, 2, h, w)
+            else:
+                flows_forward = self.optical_module(lrs_2, lrs_1)[-1].view(n, t - 1, 2, h, w)
 
         return flows_forward, flows_backward
 

@@ -51,6 +51,7 @@ def get_config(config_parser):
     # model
     fill_config_with(config, config_parser, str, "model", "SPYNET_PRETRAINED")
     fill_config_with(config, config_parser, str, "model", "BASIC_VSR_PRETRAINED")
+    fill_config_with(config, config_parser, str, "model", "OPTICAL_FLOW_MODULE")
     fill_config_with(config, config_parser, int, "model", "RESET_SPYNET")
 
     # training
@@ -62,4 +63,5 @@ def get_config(config_parser):
     fill_config_with(config, config_parser, str, "result", "RESULT_DIR")
     
     config['result_dir'] = join(config['result_dir'], config['exp_name'])
+    
     return config
