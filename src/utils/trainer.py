@@ -27,10 +27,15 @@ def train_loop(
     optimizer,
     scheduler,
     scaler,
-    grad_accumulation_steps=1,
 ):
     epoch_loss = 0
+    grad_accumulation_steps = config.get("grad_accum_steps", 1)
+    skip_frames = config.get("skip_frames", 0)
+    if skip_frames:
+        mid_frame = config["rolling_window"] // 2
+    loss = torch.zeros(1, device=device)
     with tqdm(train_loader, ncols=100) as pbar:
+        pbar.set_description(f"[Epoch {epoch+1}]")
         for idx, data in enumerate(pbar):
             optimizer.zero_grad()
             gt_sequences, lq_sequences = Variable(data[0]), Variable(data[1])
@@ -40,20 +45,26 @@ def train_loop(
 
             with autocast():
                 pred_sequences = model(lq_sequences)
-                mid_frame = config["rolling_window"] // 2
-                pred_sequences = pred_sequences[
-                    :, mid_frame, :, :, :
-                ]  # TODO challenge that: shuld e compute the loss on all the reconstructed frames ??
-                gt_sequences = gt_sequences[:, mid_frame, :, :, :]
+                
+                if skip_frames:
+                    pred_sequences = pred_sequences[
+                        :, mid_frame, :, :, :
+                    ]
+                    gt_sequences = gt_sequences[:, mid_frame, :, :, :]
+                else:
+                    # keep all the frames except the first and last
+                    pred_sequences = pred_sequences[:, 1:-1, :, :, :]
+                    gt_sequences = gt_sequences[:, 1:-1, :, :, :]
 
-                loss = criterion(pred_sequences, gt_sequences)
-                epoch_loss += loss.item()
+                loss_batch = criterion(pred_sequences, gt_sequences)
+                epoch_loss += loss_batch.item()
             # epoch_psnr += 10 * log10(1 / loss.data)
+            loss +=loss_batch
+            if (idx + 1) % grad_accumulation_steps == 0:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+                scheduler.step()
+                loss = torch.zeros(1, device=device)
 
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
-            scheduler.step()
-
-            pbar.set_description(f"[Epoch {epoch+1}]")
-            pbar.set_postfix(OrderedDict(loss=f"{loss.data:.3f}"))
+            pbar.set_postfix(OrderedDict(loss=f"{loss_batch.data:.10f}"))

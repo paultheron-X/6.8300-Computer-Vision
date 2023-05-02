@@ -50,6 +50,8 @@ def main(config):
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
+        patch_size=config["patch_size"],
+        skip_frames=config["skip_frames"],
     )
     test_dataset = VideoDataset(
         lr_data_dir=config["lr_data_dir"],
@@ -57,6 +59,8 @@ def main(config):
         rolling_window=config["rolling_window"],
         is_test=True,
         is_small_test=False,
+        patch_size=config["patch_size"],
+        skip_frames=config["skip_frames"],
     )
 
     val_dataset = VideoDataset(
@@ -66,6 +70,7 @@ def main(config):
         is_test=True,
         is_small_test=True,
         patch_size=config["patch_size"],
+        skip_frames=config["skip_frames"],
     )
 
     logging.debug(f"Creating train and test dataloaders")
@@ -75,7 +80,10 @@ def main(config):
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
-    model = basicVSR(spynet_pretrained=config["spynet_pretrained"]).to(device)
+    model = basicVSR(
+        spynet_pretrained=config["spynet_pretrained"],
+        pretrained_model=config["basic_vsr_pretrained"],
+    ).to(device)
 
     criterion = CharbonnierLoss().to(device)
     criterion_mse = nn.MSELoss().to(device)
@@ -94,14 +102,12 @@ def main(config):
         betas=(0.9, 0.99),
     )
     scaler = GradScaler()
-    grad_accumulate_steps = config.get("grad_accum_steps", 1)
-    logging.debug(f"Using gradient accumulation steps: {grad_accumulate_steps}")
 
     max_epoch = config["epochs"]
     scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-7)
 
-    os.makedirs(f'{config["log_dir"]}/models', exist_ok=True)
-    os.makedirs(f'{config["log_dir"]}/images', exist_ok=True)
+    os.makedirs(f'{config["result_dir"]}/models', exist_ok=True)
+    os.makedirs(f'{config["result_dir"]}/images', exist_ok=True)
 
     logging.info("Starting training")
     train_loss = []
@@ -129,7 +135,6 @@ def main(config):
             optimizer,
             scheduler,
             scaler,
-            grad_accumulate_steps,
         )
 
         train_loss.append(epoch_loss / len(train_loader))
@@ -159,7 +164,7 @@ def main(config):
     plt.plot(x_train, train_loss)
     plt.plot(x_val, validation_loss)
 
-    fig.savefig(f'{config["log_dir"]}/loss.png')
+    fig.savefig(f'{config["result_dir"]}/loss.png')
 
 
 if __name__ == "__main__":

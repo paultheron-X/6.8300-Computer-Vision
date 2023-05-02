@@ -57,42 +57,59 @@ class VideoDataset(Dataset):
             self.keys = small_val_keys
         else:
             self.keys = self.total_keys
-
-        if not kwargs.get("skip_frames", False):
-            self.files_per_key = {
+        
+        self.files_per_key = {
                 key: sorted(
                     os.listdir(os.path.join(self.lr_data_dir, key))
                 )  # get all the files in the key directory
                 for key in self.keys
             }
-
+        if not kwargs.get("skip_frames", 0):
+            self.frames = {
+                key: [self.files_per_key[key][i:i+self.rolling_window] for i in range(0, len(self.files_per_key[key])-self.rolling_window+1, 1)]
+                for key in self.keys
+            }
             self.num_files_per_key = {
-                key: len(self.files_per_key[key]) for key in self.keys
+                key: len(self.frames[key]) for key in self.keys
             }
         else:
             # we will skip some frames in the dataset:
-            # example: if we have a rolling window of 5, we would do:
-            # (f1 f2 f3 f4 f5) , then (f4 f5 f6 f7 f8) and so on + we calculate the loss only on the frames that are not on the side
-            #
-            pass
+            # example: if we have a rolling window of 5, we would do, with 10 images
+            # (f0 f1 f2 f3 f4) , then (f3 f4 f5 f6 f7) then (f6 f7 f8 f9)
+            self.frames = {
+                key: [self.files_per_key[key][i:i+self.rolling_window] for i in range(0, len(self.files_per_key[key]), self.rolling_window-2)]
+                for key in self.keys
+            }
+            # if the last frame length is not the same as the rolling window, we remove it
+            for key in self.keys:
+                if len(self.frames[key][-1]) != self.rolling_window:
+                    self.frames[key] = self.frames[key][:-1]
+            
+            self.num_files_per_key = {
+                key: len(self.frames[key])
+                for key in self.keys
+            }
+        self.len = sum(self.num_files_per_key.values())
+        
+        #print("Dataset length: ", self.len)
+        #print("Keys: ", self.keys)
+        #print("Number of files per key: ", self.num_files_per_key)
+        #print("Frames per key: ", self.frames)
+            
 
     def __len__(self):
         # this dataset will extract batch of rolling_window frames from each video
         # will take the keys sequentially
-        return sum(
-            [self.num_files_per_key[key] - self.rolling_window + 1 for key in self.keys]
-        )
+        return self.len
 
     def __getitem__(self, index):
+        # 1. get the key and the index of the file in the key
         # get the key and the index of the file in the key
-        key, file_idx = self.get_key_and_file_idx(index)
+        key, frame_idx = self.get_key_and_frame_idx(index)
         # get the file names of the rolling window
-        file_names = self.files_per_key[key][
-            file_idx
-            - (self.rolling_window - 1) // 2 : file_idx
-            + (self.rolling_window - 1) // 2
-            + 1
-        ]
+        file_names = self.frames[key][frame_idx]
+        
+        # 2. read the images part 
         # gt_image
         gt_images = [
             read_image(os.path.join(self.hr_data_dir, key, file_name)) / 255
@@ -109,7 +126,7 @@ class VideoDataset(Dataset):
 
         lr_images_tensor = lr_images_tensor[
             :, :, 4:, :
-        ]  # TODO: Still necessary ? with pad size
+        ]  # TODO: Still necessary with pad size
         gt_images_tensor = gt_images_tensor[:, :, 16:, :]
 
         if not self.is_test:
@@ -120,16 +137,14 @@ class VideoDataset(Dataset):
 
         return lr_images_tensor, gt_images_tensor
 
-    def get_key_and_file_idx(self, index):
+    def get_key_and_frame_idx(self, index):
         # get the key and the index of the file in the key
+        # all the keys have the same number of frame per key    
         for key in self.keys:
-            if index < self.num_files_per_key[key] - self.rolling_window + 1:
-                return (
-                    key,
-                    index + (self.rolling_window - 1) // 2,
-                )  # add the offset to get the index of the middle frame
+            if index < self.num_files_per_key[key]:
+                return key, index
             else:
-                index -= self.num_files_per_key[key] - self.rolling_window + 1
+                index -= self.num_files_per_key[key]
         raise ValueError("Index out of range")
 
     def transform(self, gt_seq, lq_seq):

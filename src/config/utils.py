@@ -53,6 +53,7 @@ def get_config(config_parser):
     fill_config_with(config, config_parser, int, "data", "SCALE_FACTOR")
     fill_config_with(config, config_parser, int, "data", "VAL_INTERVAL")
     fill_config_with(config, config_parser, int, "data", "MAX_KEYS")
+    fill_config_with(config, config_parser, int, "data", "SKIP_FRAMES")
 
     # model
     fill_config_with(config, config_parser, str, "model", "SPYNET_PRETRAINED")
@@ -61,7 +62,6 @@ def get_config(config_parser):
     fill_config_with(config, config_parser, int, "model", "RESET_SPYNET")
 
     # training
-    fill_config_with(config, config_parser, str, "training", "LOG_DIR")
     fill_config_with(config, config_parser, int, "training", "EPOCHS")
     fill_config_with(config, config_parser, int, "training", "GRAD_ACCUM_STEPS")
 

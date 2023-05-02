@@ -36,6 +36,7 @@ def main(config):
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         is_test=True,
+        skip_frames=config["skip_frames"],
     )
 
     logging.debug(f"Creating train and test dataloaders")
