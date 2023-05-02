@@ -7,7 +7,6 @@ import torch
 from torch import nn
 
 from .SPyNet import SPyNet, get_spynet
-from ..optical_flow import get_raft
 from .modules import PixelShuffle, ResidualBlocksWithInputConv, flow_warp
 
 import logging
@@ -21,9 +20,13 @@ class basicVSR(nn.Module):
 
         # alignment(optical flow network)
         #self.optical_module = get_spynet(spynet_pretrained)
-        if kwargs['optical_flow_module'] == 'SPYNET':
+        
+        # map kwargs to optical flow module
+        optical_flow_module = kwargs.get('optical_flow_module', 'SPYNET')
+        if optical_flow_module == 'SPYNET':
             self.optical_module = get_spynet(spynet_pretrained)
-        elif kwargs['optical_flow_module'] == 'RAFT':
+        elif optical_flow_module == 'RAFT':
+            from ..optical_flow import get_raft
             self.optical_module = get_raft(small=False)
         else:
             raise NotImplementedError(f"Optical flow module {kwargs['optical_flow_module']} not implemented")
@@ -50,7 +53,7 @@ class basicVSR(nn.Module):
                 self.load_pretrained_weights(torch.load(pretrained_model))
                 logging.debug(f"Loaded pretrained weights from {pretrained_model}")
 
-        if kwargs['reset_spynet']:
+        if kwargs.get('reset_spynet', False):
             logging.debug("Resetting SPyNet weights")
             self.optical_module = get_spynet(spynet_pretrained)  # we take the old spynet
 

@@ -1,11 +1,10 @@
-
 for i in 3 5 25 
 do
-    for opt_mod in 'RAFT' 'SPYNET'
+    for opt_mod in 'SPYNET' 'RAFT'
     do
         export rolling_window=$i
         export optical_flow_module=$opt_mod
-        export exp_name="raft_bvsr_${rolling_window}"
+        export exp_name="${opt_mod}_bvsr_${rolling_window}"
 
         echo "Running experiment: ${exp_name}"
         

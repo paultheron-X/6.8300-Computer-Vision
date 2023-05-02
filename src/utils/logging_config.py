@@ -22,3 +22,7 @@ def logger_setup(args):
 
     pil_logger = logging.getLogger("PIL")
     pil_logger.setLevel(logging.INFO)
+    
+    torch_logger = logging.getLogger("torch")
+    # remove the output of all torch logger
+    torch_logger.setLevel(logging.ERROR)

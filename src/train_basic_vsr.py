@@ -30,6 +30,7 @@ from utils.utils_general import resize_sequences
 from utils.tester import test_loop
 from utils.trainer import train_loop
 
+from torch.cuda.amp import GradScaler
 
 def main(config):
     # set the seeds
@@ -59,6 +60,7 @@ def main(config):
         rolling_window=config["rolling_window"],
         is_test=True,
         is_small_test=True,
+        patch_size=config["patch_size"]
     )
 
     logging.debug(f"Creating train and test dataloaders")
@@ -72,7 +74,7 @@ def main(config):
     criterion_mse = nn.MSELoss().to(device)
     optimizer = torch.optim.Adam(
         [
-            {"params": model.spynet.parameters(), "lr": 2.5e-5},
+            {"params": model.optical_module.parameters(), "lr": 2.5e-5},
             {"params": model.backward_resblocks.parameters()},
             {"params": model.forward_resblocks.parameters()},
             {"params": model.fusion.parameters()},
@@ -84,6 +86,7 @@ def main(config):
         lr=2e-4,
         betas=(0.9, 0.99),
     )
+    scaler = GradScaler()
 
     max_epoch = config["epochs"]
     scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-7)
@@ -94,18 +97,20 @@ def main(config):
     logging.info("Starting training")
     train_loss = []
     validation_loss = []
+    
+    comp_model = torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
-        model.train()
+        comp_model.train()
         # fix SPyNet and EDVR at first 5000 iteration
         if epoch < 5000:
-            for k, v in model.named_parameters():
+            for k, v in comp_model.named_parameters():
                 if "spynet" in k or "edvr" in k:
                     v.requires_grad_(False)
         elif epoch == 5000:
             # train all the parameters
-            model.requires_grad_(True)
+            comp_model.requires_grad_(True)
 
-        epoch_loss, model = train_loop(model, epoch, config, device, train_loader, criterion, optimizer, scheduler)
+        epoch_loss, comp_model = train_loop(comp_model, epoch, config, device, train_loader, criterion, optimizer, scheduler, scaler)
 
         train_loss.append(epoch_loss / len(train_loader))
         if (epoch + 1) % config["val_interval"] != 0:
@@ -114,11 +119,11 @@ def main(config):
         logging.debug(f"Starting validation at epoch {epoch+1}")
 
         # with val loader it is fast eval
-        val_loss, model = test_loop(model, max_epoch, config, device, val_loader, criterion_mse)
+        val_loss, comp_model = test_loop(comp_model, max_epoch, config, device, val_loader, criterion_mse)
 
         if epoch % 10 == 0 and epoch != 0:
             # we run a full eval on the test set
-            _, model = test_loop(model, max_epoch, config, device, test_loader, criterion_mse)
+            _, comp_model = test_loop(comp_model, max_epoch, config, device, test_loader, criterion_mse)
 
         validation_loss.append(val_loss / len(val_loader))
 

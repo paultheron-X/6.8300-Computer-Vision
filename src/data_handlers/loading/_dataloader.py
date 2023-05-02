@@ -7,7 +7,7 @@ sys.path.append(
 )  # for testing this file with main and so that utils can be imported
 
 import torch
-import torchvision.transforms as TF
+import torchvision.transforms as T
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import numpy as np
@@ -38,6 +38,7 @@ class VideoDataset(Dataset):
         self.is_test = is_test
         
         self.rolling_window = rolling_window
+        self.patch_size = kwargs.get("patch_size", 64)
         
         self.total_keys = sorted(os.listdir(self.lr_data_dir))
         self.total_keys = [i for i in self.total_keys if i not in ["downsampled", "fimg", "big_crop"]]
@@ -47,8 +48,9 @@ class VideoDataset(Dataset):
             self.keys = small_val_keys
         else:
             self.keys = self.total_keys
+            
 
-        if not 'skip_rolling' in kwargs.keys():
+        if not kwargs.get("skip_frames", False):
             self.files_per_key = {
                 key: sorted(
                     os.listdir(os.path.join(self.lr_data_dir, key))
@@ -98,7 +100,7 @@ class VideoDataset(Dataset):
         gt_images_tensor = gt_images_tensor[:, :, 16:, :]
         
         if not self.is_test:
-            # TODO Here: Add the transforms
+            lr_images_tensor, gt_images_tensor = self.transform(gt_images_tensor, lr_images_tensor)
             pass
         
         return lr_images_tensor, gt_images_tensor
@@ -115,41 +117,11 @@ class VideoDataset(Dataset):
                 index -= self.num_files_per_key[key] - self.rolling_window + 1
         raise ValueError("Index out of range")
     
-
-def generate_segment_indices(
-    videopath1, videopath2, num_input_frames=10, filename_tmpl="{:08d}.png"
-):
-    """generate segment function
-    Args:
-        videopath1,2 (str): input directory which contains sequential frames
-        filename_tmpl (str): template which represents sequential frames
-    Returns:
-        Tensor, Tensor: Output sequence with shape (t, c, h, w)
-    """
-    seq_length = len(glob.glob(f"{videopath1}/*.png"))
-    seq_length2 = len(glob.glob(f"{videopath2}/*.png"))
-
-    if seq_length != seq_length2:
-        raise ValueError(
-            f"videopath1 and videopath2 must have same number of frames\nbut they have {seq_length} and {seq_length2}"
-        )
-    if num_input_frames > seq_length:
-        raise ValueError(
-            f"num_input_frames{num_input_frames} must be greater than frames in {videopath1} \n and {videopath2}"
-        )
-
-    start_frame_idx = np.random.randint(0, seq_length - num_input_frames)
-    end_frame_idx = start_frame_idx + num_input_frames
-    segment1 = [
-        self.read_image(os.path.join(videopath1, filename_tmpl.format(i))) / 255.0
-        for i in range(start_frame_idx, end_frame_idx)
-    ]
-    segment2 = [
-        self.read_image(os.path.join(videopath2, filename_tmpl.format(i))) / 255.0
-        for i in range(start_frame_idx, end_frame_idx)
-    ]
-    return torch.stack(segment1), torch.stack(segment2)
-
+    def transform(self,gt_seq,lq_seq):
+        gt_transformed,lq_transformed=pair_random_crop_seq(gt_seq,lq_seq,patch_size=self.patch_size)
+        gt_transformed,lq_transformed=pair_random_flip_seq(gt_transformed,lq_transformed,p=0.5)
+        gt_transformed,lq_transformed=pair_random_transposeHW_seq(gt_transformed,lq_transformed,p=0.5) 
+        return gt_transformed,lq_transformed
 
 def pair_random_crop_seq(hr_seq, lr_seq, patch_size, scale_factor=4):
     """crop image pair for data augment
@@ -158,7 +130,7 @@ def pair_random_crop_seq(hr_seq, lr_seq, patch_size, scale_factor=4):
         lr (Tensor): lr images with shape (t, c, h, w).
         patch_size (int): the size of cropped image
     Returns:
-        Tensor, Tensor: cropped images(hr,lr)
+        Tensor, Tensor: cropped images(hr,lr) of shape (t, c, patch_size, patch_size) and (t, c, patch_size*scale, patch_size*scale)
     """
     seq_lenght = lr_seq.size(dim=0)
     gt_transformed = torch.empty(
