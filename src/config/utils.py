@@ -4,12 +4,14 @@ import os
 import json
 import logging
 
+
 class OsEnvInterpolation(BasicInterpolation):
-    '''
+    """
     This class is used to interpolate environment variables into the config file.
     Those variable can have the following form: ${ENV_VAR_NAME}
     They were previously set in the bash file as follows: export ENV_VAR_NAME=value
-    '''
+    """
+
     def before_get(self, parser, section, option, value, defaults):
         return os.path.expandvars(value)
 
@@ -21,7 +23,9 @@ def get_config_parser(filename="config_gan.cfg"):
     return config
 
 
-def fill_config_with(config, config_parser, modifier, section, option):  # handles if the option is not in the config file
+def fill_config_with(
+    config, config_parser, modifier, section, option
+):  # handles if the option is not in the config file
     if config_parser.has_section(section) and config_parser.has_option(section, option):
         config[option.lower()] = modifier(config_parser.get(section, option))
     return config
@@ -33,7 +37,9 @@ def get_config(config_parser):
     # dataset
     fill_config_with(config, config_parser, str, "dataset", "DATA_PATH")
     if "GOOGLE_COLAB" in os.environ:
-        config["data_path"] = config["data_path"].replace("data", "/content/drive/MyDrive/data_vision")
+        config["data_path"] = config["data_path"].replace(
+            "data", "/content/drive/MyDrive/data_vision"
+        )
     fill_config_with(config, config_parser, str, "dataset", "LR_DATA_DIR")
     fill_config_with(config, config_parser, str, "dataset", "HR_DATA_DIR")
     fill_config_with(config, config_parser, int, "dataset", "PREPARE_DATA")
@@ -57,11 +63,12 @@ def get_config(config_parser):
     # training
     fill_config_with(config, config_parser, str, "training", "LOG_DIR")
     fill_config_with(config, config_parser, int, "training", "EPOCHS")
-    
+    fill_config_with(config, config_parser, int, "training", "GRAD_ACCUM_STEPS")
+
     # result
     fill_config_with(config, config_parser, str, "result", "EXP_NAME")
     fill_config_with(config, config_parser, str, "result", "RESULT_DIR")
-    
-    config['result_dir'] = join(config['result_dir'], config['exp_name'])
-    
+
+    config["result_dir"] = join(config["result_dir"], config["exp_name"])
+
     return config

@@ -23,32 +23,40 @@ from utils.arguments_parser import data_loading_parser
 
 
 class VideoDataset(Dataset):
-    def __init__(self, lr_data_dir, hr_data_dir, is_test=False, is_small_test = False, rolling_window=5, **kwargs):
-        
-        if not is_test: # always put the training folder as input
+    def __init__(
+        self,
+        lr_data_dir,
+        hr_data_dir,
+        is_test=False,
+        is_small_test=False,
+        rolling_window=5,
+        **kwargs,
+    ):
+        if not is_test:  # always put the training folder as input
             self.lr_data_dir = lr_data_dir
             self.hr_data_dir = hr_data_dir
         else:
             self.lr_data_dir = lr_data_dir.replace("train", "val")
             self.hr_data_dir = hr_data_dir.replace("train", "val")
-        
+
         if rolling_window % 2 == 0:
             raise ValueError("Rolling window must be odd")
-        
+
         self.is_test = is_test
-        
+
         self.rolling_window = rolling_window
         self.patch_size = kwargs.get("patch_size", 64)
-        
-        self.total_keys = sorted(os.listdir(self.lr_data_dir))
-        self.total_keys = [i for i in self.total_keys if i not in ["downsampled", "fimg", "big_crop"]]
 
-        small_val_keys = ['000', '010', '020', '029']
+        self.total_keys = sorted(os.listdir(self.lr_data_dir))
+        self.total_keys = [
+            i for i in self.total_keys if i not in ["downsampled", "fimg", "big_crop"]
+        ]
+
+        small_val_keys = ["000", "010", "020", "029"]
         if is_small_test:
             self.keys = small_val_keys
         else:
             self.keys = self.total_keys
-            
 
         if not kwargs.get("skip_frames", False):
             self.files_per_key = {
@@ -62,10 +70,10 @@ class VideoDataset(Dataset):
                 key: len(self.files_per_key[key]) for key in self.keys
             }
         else:
-            # we will skip some frames in the dataset: 
+            # we will skip some frames in the dataset:
             # example: if we have a rolling window of 5, we would do:
             # (f1 f2 f3 f4 f5) , then (f4 f5 f6 f7 f8) and so on + we calculate the loss only on the frames that are not on the side
-            # TODO: Implement
+            #
             pass
 
     def __len__(self):
@@ -87,22 +95,29 @@ class VideoDataset(Dataset):
         ]
         # gt_image
         gt_images = [
-            read_image(os.path.join(self.hr_data_dir, key, file_name)) / 255 for file_name in file_names
+            read_image(os.path.join(self.hr_data_dir, key, file_name)) / 255
+            for file_name in file_names
         ]
         gt_images_tensor = torch.stack(gt_images)
         # read the images
-        lr_images = [read_image(
-            os.path.join(self.lr_data_dir, key, file_name)) /255 for file_name in file_names]
+        lr_images = [
+            read_image(os.path.join(self.lr_data_dir, key, file_name)) / 255
+            for file_name in file_names
+        ]
         # stack the images
         lr_images_tensor = torch.stack(lr_images)  # (t, c, h, w)
-        
-        lr_images_tensor = lr_images_tensor[:, :, 4:, :]
+
+        lr_images_tensor = lr_images_tensor[
+            :, :, 4:, :
+        ]  # TODO: Still necessary ? with pad size
         gt_images_tensor = gt_images_tensor[:, :, 16:, :]
-        
+
         if not self.is_test:
-            lr_images_tensor, gt_images_tensor = self.transform(gt_images_tensor, lr_images_tensor)
+            lr_images_tensor, gt_images_tensor = self.transform(
+                gt_images_tensor, lr_images_tensor
+            )
             pass
-        
+
         return lr_images_tensor, gt_images_tensor
 
     def get_key_and_file_idx(self, index):
@@ -116,12 +131,19 @@ class VideoDataset(Dataset):
             else:
                 index -= self.num_files_per_key[key] - self.rolling_window + 1
         raise ValueError("Index out of range")
-    
-    def transform(self,gt_seq,lq_seq):
-        gt_transformed,lq_transformed=pair_random_crop_seq(gt_seq,lq_seq,patch_size=self.patch_size)
-        gt_transformed,lq_transformed=pair_random_flip_seq(gt_transformed,lq_transformed,p=0.5)
-        gt_transformed,lq_transformed=pair_random_transposeHW_seq(gt_transformed,lq_transformed,p=0.5) 
-        return gt_transformed,lq_transformed
+
+    def transform(self, gt_seq, lq_seq):
+        gt_transformed, lq_transformed = pair_random_crop_seq(
+            gt_seq, lq_seq, patch_size=self.patch_size
+        )
+        gt_transformed, lq_transformed = pair_random_flip_seq(
+            gt_transformed, lq_transformed, p=0.5
+        )
+        gt_transformed, lq_transformed = pair_random_transposeHW_seq(
+            gt_transformed, lq_transformed, p=0.5
+        )
+        return gt_transformed, lq_transformed
+
 
 def pair_random_crop_seq(hr_seq, lr_seq, patch_size, scale_factor=4):
     """crop image pair for data augment

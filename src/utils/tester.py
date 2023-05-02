@@ -25,16 +25,14 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                 gt_sequences = gt_sequences.to(device)
                 lq_sequences = lq_sequences.to(device)
                 pred_sequences = model(lq_sequences)
-                lq_mid = resize_sequences(
-                    lq_sequences, pred_sequences.shape[-2:]
-                )
-                
+                lq_mid = resize_sequences(lq_sequences, pred_sequences.shape[-2:])
+
                 # compute the loss only on the middle frame of the rolling window
                 mid_frame = pred_sequences.shape[1] // 2
                 pred_sequences = pred_sequences[:, mid_frame, :, :, :]
                 gt_sequences = gt_sequences[:, mid_frame, :, :, :]
                 lq_mid = lq_mid[:, mid_frame, :, :, :]
-        
+
                 val_mse = criterion_mse(pred_sequences, gt_sequences)
                 lq_mse = criterion_mse(lq_mid, gt_sequences)
                 val_psnr += 10 * log10(1 / val_mse.data)
@@ -42,7 +40,7 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                 pbar.set_description(
                     f"PSNR:{val_psnr / (idx + 1):.2f},(lq:{lq_psnr/(idx + 1):.2f})"
                 )
-                
+
                 save_image(
                     pred_sequences[0],
                     f'{config["result_dir"]}/images/epoch{epoch+1:05}/{idx}_SR.png',
@@ -63,10 +61,12 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
         logging.info(
             f"==[validation]== PSNR:{val_psnr / len(test_loader):.2f},(lq:{lq_psnr/len(test_loader):.2f})"
         )
-        #TODO: Implement checkpoint saving (not at every epoch but keep the best one only)
-        torch.save(model.state_dict(), f'{config["result_dir"]}/models/model_{epoch}.pth')
-        
+        # TODO: Implement checkpoint saving (not at every epoch but keep the best one only)
+        torch.save(
+            model.state_dict(), f'{config["result_dir"]}/models/model_{epoch}.pth'
+        )
+
         # write the psnr to a file
-        with open(f'{config["result_dir"]}/psnr.txt', 'a') as f:
-            f.write(f'{epoch} {val_psnr / len(test_loader)}\n')
+        with open(f'{config["result_dir"]}/psnr.txt', "a") as f:
+            f.write(f"{epoch} {val_psnr / len(test_loader)}\n")
     return val_loss, model

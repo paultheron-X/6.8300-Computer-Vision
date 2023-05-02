@@ -32,6 +32,7 @@ from utils.trainer import train_loop
 
 from torch.cuda.amp import GradScaler
 
+
 def main(config):
     # set the seeds
     torch.manual_seed(config["seed"])
@@ -45,7 +46,11 @@ def main(config):
     logging.info("Loading data")
     logging.debug(f"Creating dataset from path: {config['lr_data_dir']}")
 
-    train_dataset = VideoDataset(lr_data_dir=config["lr_data_dir"], hr_data_dir=config["hr_data_dir"], rolling_window=config["rolling_window"])
+    train_dataset = VideoDataset(
+        lr_data_dir=config["lr_data_dir"],
+        hr_data_dir=config["hr_data_dir"],
+        rolling_window=config["rolling_window"],
+    )
     test_dataset = VideoDataset(
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
@@ -60,11 +65,13 @@ def main(config):
         rolling_window=config["rolling_window"],
         is_test=True,
         is_small_test=True,
-        patch_size=config["patch_size"]
+        patch_size=config["patch_size"],
     )
 
     logging.debug(f"Creating train and test dataloaders")
-    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
+    train_loader = DataLoader(
+        train_dataset, batch_size=config["batch_size"], shuffle=True
+    )
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
@@ -87,6 +94,8 @@ def main(config):
         betas=(0.9, 0.99),
     )
     scaler = GradScaler()
+    grad_accumulate_steps = config.get("grad_accum_steps", 1)
+    logging.debug(f"Using gradient accumulation steps: {grad_accumulate_steps}")
 
     max_epoch = config["epochs"]
     scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-7)
@@ -97,7 +106,7 @@ def main(config):
     logging.info("Starting training")
     train_loss = []
     validation_loss = []
-    
+
     comp_model = torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
         comp_model.train()
@@ -110,7 +119,18 @@ def main(config):
             # train all the parameters
             comp_model.requires_grad_(True)
 
-        epoch_loss, comp_model = train_loop(comp_model, epoch, config, device, train_loader, criterion, optimizer, scheduler, scaler)
+        epoch_loss, comp_model = train_loop(
+            comp_model,
+            epoch,
+            config,
+            device,
+            train_loader,
+            criterion,
+            optimizer,
+            scheduler,
+            scaler,
+            grad_accumulate_steps,
+        )
 
         train_loss.append(epoch_loss / len(train_loader))
         if (epoch + 1) % config["val_interval"] != 0:
@@ -119,11 +139,15 @@ def main(config):
         logging.debug(f"Starting validation at epoch {epoch+1}")
 
         # with val loader it is fast eval
-        val_loss, comp_model = test_loop(comp_model, max_epoch, config, device, val_loader, criterion_mse)
+        val_loss, comp_model = test_loop(
+            comp_model, max_epoch, config, device, val_loader, criterion_mse
+        )
 
         if epoch % 10 == 0 and epoch != 0:
             # we run a full eval on the test set
-            _, comp_model = test_loop(comp_model, max_epoch, config, device, test_loader, criterion_mse)
+            _, comp_model = test_loop(
+                comp_model, max_epoch, config, device, test_loader, criterion_mse
+            )
 
         validation_loss.append(val_loss / len(val_loader))
 
