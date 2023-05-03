@@ -125,7 +125,7 @@ def main(config):
             # train all the parameters
             comp_model.requires_grad_(True)
 
-        epoch_loss, comp_model = train_loop(
+        epoch_loss = train_loop(
             comp_model,
             epoch,
             config,
@@ -144,13 +144,13 @@ def main(config):
         logging.debug(f"Starting validation at epoch {epoch+1}")
 
         # with val loader it is fast eval
-        val_loss, comp_model = test_loop(
+        val_loss = test_loop(
             comp_model, max_epoch, config, device, val_loader, criterion_mse
         )
 
         if epoch % 10 == 0 and epoch != 0:
             # we run a full eval on the test set
-            _, comp_model = test_loop(
+            _ = test_loop(
                 comp_model, max_epoch, config, device, test_loader, criterion_mse
             )
 

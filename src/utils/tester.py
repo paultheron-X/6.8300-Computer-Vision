@@ -69,4 +69,4 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
         # write the psnr to a file
         with open(f'{config["result_dir"]}/psnr.txt', "a") as f:
             f.write(f"{epoch} {val_psnr / len(test_loader)}\n")
-    return val_loss, model
+    return val_loss

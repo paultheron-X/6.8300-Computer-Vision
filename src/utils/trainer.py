@@ -68,3 +68,5 @@ def train_loop(
                 loss = torch.zeros(1, device=device)
 
             pbar.set_postfix(OrderedDict(loss=f"{loss_batch.data:.10f}"))
+
+    return epoch_loss
