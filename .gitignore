@@ -135,3 +135,7 @@ private_script.txt
 experiments/*
 results/*
 *.png
+
+.vscode-server
+
+checkpoints/tests
