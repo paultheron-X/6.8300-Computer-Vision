@@ -1,1 +1,1 @@
-from .basicVSR import basicVSR, BasicVSRPlusPlus
+from .basicVSR import basicVSR, BasicVSRPlusPlus, BasicVSRWithAttention

@@ -8,24 +8,17 @@ from utils.arguments_parser import args_parser
 from config import return_config
 
 import os
-import argparse
-from typing import OrderedDict
-from tqdm import tqdm
 import matplotlib.pyplot as plt
-from math import log10
-from PIL import Image
+
 
 import torch
 from torch import nn
-from torch.autograd import Variable
-from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from data_handlers.loading import VideoDataset
-from models import basicVSR
+from models import BasicVSRWithAttention
 from utils.loss import CharbonnierLoss
-from utils.utils_general import resize_sequences
 
 from utils.tester import test_loop
 from utils.trainer import train_loop
@@ -80,27 +73,30 @@ def main(config):
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
-    model = basicVSR(
+    model = BasicVSRWithAttention(
         spynet_pretrained=config["spynet_pretrained"],
         pretrained_model=config["basic_vsr_pretrained"],
+        num_attention_heads=config["attention_heads"],
     ).to(device)
 
     criterion = CharbonnierLoss().to(device)
     criterion_mse = nn.MSELoss().to(device)
     optimizer = torch.optim.Adam(
         [
-            {"params": model.optical_module.parameters(), "lr": 2.5e-5},
-            {"params": model.backward_resblocks.parameters()},
-            {"params": model.forward_resblocks.parameters()},
-            {"params": model.fusion.parameters()},
-            {"params": model.upsample1.parameters()},
-            {"params": model.upsample2.parameters()},
-            {"params": model.conv_hr.parameters()},
-            {"params": model.conv_last.parameters()},
+            {"params": model.optical_module.parameters(), "lr": 1e-5},
+            {"params": model.backward_resblocks.parameters(), "lr": 1e-5},
+            {"params": model.forward_resblocks.parameters(), "lr": 1e-5},
+            {"params": model.fusion.parameters(), "lr": 1e-5},
+            {"params": model.upsample1.parameters(), "lr": 1e-5},
+            {"params": model.upsample2.parameters(), "lr": 1e-5},
+            {"params": model.conv_hr.parameters(), "lr": 1e-5},
+            {"params": model.conv_last.parameters(), "lr": 1e-5},
+            {"params": model.forward_attention.parameters(), "lr": 2e-4},
+            {"params": model.backward_attention.parameters(), "lr": 2e-4},
         ],
-        lr=2e-4,
         betas=(0.9, 0.99),
     )
+
     scaler = GradScaler()
 
     max_epoch = config["epochs"]
@@ -113,7 +109,7 @@ def main(config):
     train_loss = []
     validation_loss = []
 
-    comp_model = torch.compile(model, backend="aot_eager")
+    comp_model = model #torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
         comp_model.train()
         # fix SPyNet and EDVR at first 5000 iteration
@@ -138,7 +134,7 @@ def main(config):
         )
 
         train_loss.append(epoch_loss / len(train_loader))
-        #if (epoch + 1) % config["val_interval"] != 0:
+        # if (epoch + 1) % config["val_interval"] != 0:
         #    continue
 
         logging.debug(f"Starting validation at epoch {epoch+1}")

@@ -65,7 +65,6 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
         torch.save(
             model.state_dict(), f'{config["result_dir"]}/models/model_{epoch}.pth'
         )
-
         # write the psnr to a file
         with open(f'{config["result_dir"]}/psnr.txt', "a") as f:
             f.write(f"{epoch} {val_psnr / len(test_loader)}\n")
