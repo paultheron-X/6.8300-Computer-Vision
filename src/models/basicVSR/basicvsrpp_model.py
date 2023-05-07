@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from mmcv.ops import ModulatedDeformConv2d, modulated_deform_conv2d
 
 
-from .SPyNet import SPyNet, get_spynet
+from ..optical_flow.SPyNet import SPyNet, get_spynet
 from .modules import PixelShuffle,ResidualBlocksWithInputConv,flow_warp, constant_init
 
 

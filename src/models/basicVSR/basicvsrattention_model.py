@@ -4,7 +4,7 @@ from torch.nn import MultiheadAttention
 
 from .basicvsr_model import basicVSR
 
-from .SPyNet import get_spynet
+from ..optical_flow.SPyNet import get_spynet
 from .modules import flow_warp
 
 import logging

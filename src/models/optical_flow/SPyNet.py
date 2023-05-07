@@ -6,7 +6,7 @@ https://github.com/open-mmlab/mmediting
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .modules import flow_warp
+from ..basicVSR.modules import flow_warp
 
 class SPyNet(nn.Module):
     """SPyNet network structure.

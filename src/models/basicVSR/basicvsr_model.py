@@ -6,11 +6,10 @@ https://github.com/open-mmlab/mmediting
 import torch
 from torch import nn
 
-from .SPyNet import SPyNet, get_spynet
+from ..optical_flow.SPyNet import SPyNet, get_spynet
 from .modules import PixelShuffle, ResidualBlocksWithInputConv, flow_warp
 
 import logging
-
 
 class basicVSR(nn.Module):
     def __init__(self, scale_factor=4, mid_channels=64, num_blocks=30, spynet_pretrained=None, pretrained_model=None, **kwargs):
@@ -123,15 +122,8 @@ class basicVSR(nn.Module):
                 flows_forward = self.optical_module(lrs_2, lrs_1)[-1].view(n, t - 1, 2, h, w)
 
         return flows_forward, flows_backward
-
-    def forward(self, lrs):
-        """Forward function for BasicVSR.
-        Args:
-            lrs (Tensor): Input LR sequence with shape (n, t, c, h, w).
-        Returns:
-            Tensor: Output HR sequence with shape (n, t, c, 4h, 4w).(if scale_factor=4)
-        """
-
+    
+    def forward_core(self, lrs):
         n, t, c, h, w = lrs.size()
         assert h >= 64 and w >= 64, "The height and width of inputs should be at least 64, " f"but got {h} and {w}."
 
@@ -141,8 +133,8 @@ class basicVSR(nn.Module):
         # compute optical flow
         flows_forward, flows_backward = self.compute_flow(lrs)
 
-        # backward-time propgation
-        outputs = []
+        # backward-time propagation
+        outputs_backward = []
         feat_prop = lrs.new_zeros(n, self.mid_channels, h, w)
         for i in range(t - 1, -1, -1):
             if i < t - 1:  # no warping required for the last timestep
@@ -152,10 +144,11 @@ class basicVSR(nn.Module):
             feat_prop = torch.cat([lrs[:, i, :, :, :], feat_prop], dim=1)
             feat_prop = self.backward_resblocks(feat_prop)
 
-            outputs.append(feat_prop)
-        outputs = outputs[::-1]
+            outputs_backward.append(feat_prop)
+        outputs_backward = outputs_backward[::-1]
 
-        # forward-time propagation and upsampling
+        # forward-time propagation
+        outputs_forward = []
         feat_prop = torch.zeros_like(feat_prop)
         for i in range(0, t):
             lr_curr = lrs[:, i, :, :, :]
@@ -169,15 +162,30 @@ class basicVSR(nn.Module):
             feat_prop = torch.cat([lr_curr, feat_prop], dim=1)
             feat_prop = self.forward_resblocks(feat_prop)
 
-            # upsampling given the backward and forward features
-            out = torch.cat([outputs[i], feat_prop], dim=1)
-            out = self.lrelu(self.fusion(out))
+            outputs_forward.append(feat_prop)
+
+        return outputs_forward, outputs_backward
+    
+    def forward_fusion(self, outputs_forward_i, outputs_backward_i):
+        out = torch.cat([outputs_backward_i, outputs_forward_i], dim=1)
+        out = self.lrelu(self.fusion(out))
+
+    def forward(self, lrs):
+        n, t, c, h, w = lrs.size()
+        
+        outputs_forward, outputs_backward = self.forward_core(lrs)
+        
+        # upsampling
+        outputs = []
+        for i in range(t):
+            out = self.forward_fusion(outputs_forward[i], outputs_backward[i])
             out = self.lrelu(self.upsample1(out))
             out = self.lrelu(self.upsample2(out))
             out = self.lrelu(self.conv_hr(out))
             out = self.conv_last(out)
-            base = self.img_upsample(lr_curr)
+            base = self.img_upsample(lrs[:, i, :, :, :])
             out += base
-            outputs[i] = out
+            outputs.append(out)
 
         return torch.stack(outputs, dim=1)
+
