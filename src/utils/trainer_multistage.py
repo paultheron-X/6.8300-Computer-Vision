@@ -32,13 +32,14 @@ def train_loop(
         pbar.set_description(f"[Epoch {epoch+1}]")
         for idx, data in enumerate(pbar):
             optimizer.zero_grad()
-            gt_sequences, lq_sequences = Variable(data[1]), Variable(data[0])
+            gt_sequences, lq_sequences = data[1], data[0]
 
             gt_sequences = gt_sequences.to(device)
-            lq_sequences = lq_sequences.to(device)
+            
+            (in_1, in_2, in_3) = (lq_sequences[0].to(device), lq_sequences[1].to(device), lq_sequences[2].to(device))
 
             with autocast():
-                pred_sequences = model(lq_sequences)
+                pred_sequences = model((in_1, in_2, in_3))
                 
                 if skip_frames:
                     pred_sequences = pred_sequences[

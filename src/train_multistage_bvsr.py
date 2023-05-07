@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from data_handlers.loading import MultiStageVideoDataset
-from models import BasicVSRWithAttention
+from models import MultiStageBasicVSR
 from utils.loss import CharbonnierLoss
 
 from utils.tester_multistage import test_loop
@@ -73,10 +73,11 @@ def main(config):
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
     val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
-    model = BasicVSRWithAttention(
+    model = MultiStageBasicVSR(
         spynet_pretrained=config["spynet_pretrained"],
         pretrained_model=config["basic_vsr_pretrained"],
-        num_attention_heads=config["attention_heads"],
+        num_heads=config["attention_heads"],
+        rolling_window=config["rolling_window"],
     ).to(device)
 
     criterion = CharbonnierLoss().to(device)
@@ -91,8 +92,7 @@ def main(config):
             {"params": model.upsample2.parameters(), "lr": 1e-5},
             {"params": model.conv_hr.parameters(), "lr": 1e-5},
             {"params": model.conv_last.parameters(), "lr": 1e-5},
-            {"params": model.forward_attention.parameters(), "lr": 2e-4},
-            {"params": model.backward_attention.parameters(), "lr": 2e-4},
+            {"params": model.multihead_attention.parameters(), "lr": 2e-4},
         ],
         betas=(0.9, 0.99),
     )

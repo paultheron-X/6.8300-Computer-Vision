@@ -169,6 +169,7 @@ class basicVSR(nn.Module):
     def forward_fusion(self, outputs_forward_i, outputs_backward_i):
         out = torch.cat([outputs_backward_i, outputs_forward_i], dim=1)
         out = self.lrelu(self.fusion(out))
+        return out
 
     def forward(self, lrs):
         n, t, c, h, w = lrs.size()
