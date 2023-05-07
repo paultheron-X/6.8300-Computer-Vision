@@ -130,7 +130,7 @@ class VideoDataset(Dataset):
         gt_images_tensor = gt_images_tensor[:, :, 16:, :]
 
         if not self.is_test:
-            lr_images_tensor, gt_images_tensor = self.transform(
+            gt_images_tensor, lr_images_tensor = self.transform(
                 gt_images_tensor, lr_images_tensor
             )
             pass
@@ -239,7 +239,11 @@ if __name__ == "__main__":
     logger_setup(args)
 
     dataset = VideoDataset(
-        data_dir="data/processed", img_size=(512, 512), rolling_window=5
+       lr_data_dir="data/processed/train/train_sharp_bicubic/X4",
+        hr_data_dir="data/processed/train/train_sharp",
+        is_test=False,
+        rolling_window=5,
+        patch_size=64
     )
 
     logging.info(f"Dataset length: {len(dataset)}")

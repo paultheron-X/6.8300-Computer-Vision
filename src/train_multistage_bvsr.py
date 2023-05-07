@@ -16,12 +16,12 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from data_handlers.loading import VideoDataset
+from data_handlers.loading import MultiStageVideoDataset
 from models import BasicVSRWithAttention
 from utils.loss import CharbonnierLoss
 
-from utils.tester import test_loop
-from utils.trainer import train_loop
+from utils.tester_multistage import test_loop
+from utils.trainer_multistage import train_loop
 
 from torch.cuda.amp import GradScaler
 
@@ -39,14 +39,14 @@ def main(config):
     logging.info("Loading data")
     logging.debug(f"Creating dataset from path: {config['lr_data_dir']}")
 
-    train_dataset = VideoDataset(
+    train_dataset = MultiStageVideoDataset(
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         patch_size=config["patch_size"],
         skip_frames=config["skip_frames"],
     )
-    test_dataset = VideoDataset(
+    test_dataset = MultiStageVideoDataset(
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
@@ -56,7 +56,7 @@ def main(config):
         skip_frames=config["skip_frames"],
     )
 
-    val_dataset = VideoDataset(
+    val_dataset = MultiStageVideoDataset(
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
@@ -109,7 +109,7 @@ def main(config):
     train_loss = []
     validation_loss = []
 
-    comp_model = model #torch.compile(model, backend="aot_eager")
+    comp_model = model  # torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
         comp_model.train()
         # fix SPyNet and EDVR at first 5000 iteration
