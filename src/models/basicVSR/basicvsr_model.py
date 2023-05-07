@@ -188,4 +188,28 @@ class basicVSR(nn.Module):
             outputs.append(out)
 
         return torch.stack(outputs, dim=1)
+    
+class BasicVSRCore(basicVSR):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def forward(self, lrs):
+        return self.forward_core(lrs)
+    
+class BasicVSRFusion(basicVSR):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def forward(self, lrs):
+        n, t, c, h, w = lrs.size()
+        
+        outputs_forward, outputs_backward = self.forward_core(lrs)
+        
+        # upsampling
+        outputs = []
+        for i in range(t):
+            out = self.forward_fusion(outputs_forward[i], outputs_backward[i])
+            outputs.append(out)
+        
+        return torch.stack(outputs, dim=1)
 
