@@ -49,8 +49,8 @@ def main(config):
         train_dataset.prepare_data()  # will prepare for all
 
     logging.debug(f"Creating train and test dataloaders")
-    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4)
+    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=4)
     model = BasicVSRPlusPlus(spynet_pretrained=config["spynet_pretrained"]).to(device)
 
     criterion = CharbonnierLoss().to(device)

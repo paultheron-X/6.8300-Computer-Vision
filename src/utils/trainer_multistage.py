@@ -23,6 +23,7 @@ def train_loop(
     scaler,
 ):
     epoch_loss = 0
+    loss_curve = []
     grad_accumulation_steps = config.get("grad_accum_steps", 1)
     skip_frames = config.get("skip_frames", 0)
     if skip_frames:
@@ -40,28 +41,21 @@ def train_loop(
 
             with autocast():
                 pred_sequences = model((in_1, in_2, in_3))
-                
-                if skip_frames:
-                    pred_sequences = pred_sequences[
-                        :, mid_frame, :, :, :
-                    ]
-                    gt_sequences = gt_sequences[:, mid_frame, :, :, :]
-                else:
-                    # keep all the frames except the first and last
-                    pred_sequences = pred_sequences[:, 1:-1, :, :, :]
-                    gt_sequences = gt_sequences[:, 1:-1, :, :, :]
 
                 loss_batch = criterion(pred_sequences, gt_sequences)
                 epoch_loss += loss_batch.item()
             # epoch_psnr += 10 * log10(1 / loss.data)
-            loss +=loss_batch
+            loss += loss_batch
             if (idx + 1) % grad_accumulation_steps == 0:
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
                 scheduler.step()
                 loss = torch.zeros(1, device=device)
+            
+            if idx % 10 == 0:
+                loss_curve.append(loss_batch.item().detach().cpu())
 
             pbar.set_postfix(OrderedDict(loss=f"{loss_batch.data:.10f}"))
 
-    return epoch_loss
+    return epoch_loss, loss_curve

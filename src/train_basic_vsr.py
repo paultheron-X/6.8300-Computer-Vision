@@ -75,10 +75,10 @@ def main(config):
 
     logging.debug(f"Creating train and test dataloaders")
     train_loader = DataLoader(
-        train_dataset, batch_size=config["batch_size"], shuffle=True
+        train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4
     )
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
-    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=4)
 
     model = basicVSR(
         spynet_pretrained=config["spynet_pretrained"],

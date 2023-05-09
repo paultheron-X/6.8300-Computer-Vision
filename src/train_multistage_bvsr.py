@@ -68,10 +68,10 @@ def main(config):
 
     logging.debug(f"Creating train and test dataloaders")
     train_loader = DataLoader(
-        train_dataset, batch_size=config["batch_size"], shuffle=True
+        train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=8
     )
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
-    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=4)
 
     model = MultiStageBasicVSR(
         spynet_pretrained=config["spynet_pretrained"],
@@ -84,15 +84,15 @@ def main(config):
     criterion_mse = nn.MSELoss().to(device)
     optimizer = torch.optim.Adam(
         [
-            {"params": model.optical_module.parameters(), "lr": 1e-5},
-            {"params": model.backward_resblocks.parameters(), "lr": 1e-5},
-            {"params": model.forward_resblocks.parameters(), "lr": 1e-5},
-            {"params": model.fusion.parameters(), "lr": 1e-5},
+            #{"params": model.optical_module.parameters(), "lr": 1e-5},
+            #{"params": model.backward_resblocks.parameters(), "lr": 1e-5},
+            #{"params": model.forward_resblocks.parameters(), "lr": 1e-5},
+            #{"params": model.fusion.parameters(), "lr": 1e-5},
             {"params": model.upsample1.parameters(), "lr": 1e-5},
             {"params": model.upsample2.parameters(), "lr": 1e-5},
             {"params": model.conv_hr.parameters(), "lr": 1e-5},
             {"params": model.conv_last.parameters(), "lr": 1e-5},
-            {"params": model.multihead_attention.parameters(), "lr": 2e-4},
+            {"params": model.attention.parameters(), "lr": 1e-3},
         ],
         betas=(0.9, 0.99),
     )
@@ -109,7 +109,7 @@ def main(config):
     train_loss = []
     validation_loss = []
 
-    comp_model = model  # torch.compile(model, backend="aot_eager")
+    comp_model = torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
         comp_model.train()
         # fix SPyNet and EDVR at first 5000 iteration
@@ -121,7 +121,7 @@ def main(config):
             # train all the parameters
             comp_model.requires_grad_(True)
 
-        epoch_loss = train_loop(
+        epoch_loss, loss_curve = train_loop(
             comp_model,
             epoch,
             config,
@@ -136,6 +136,10 @@ def main(config):
         train_loss.append(epoch_loss / len(train_loader))
         # if (epoch + 1) % config["val_interval"] != 0:
         #    continue
+        # append the values of train loss to the end of a file
+        #with open(f'{config["result_dir"]}/train_loss.txt', "a") as f:
+        #    for loss in loss_curve:
+        #        f.write(str(loss) + "\n")
 
         logging.debug(f"Starting validation at epoch {epoch+1}")
 

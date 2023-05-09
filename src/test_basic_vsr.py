@@ -36,15 +36,15 @@ def main(config):
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         is_test=True,
-        skip_frames=config["skip_frames"],
+        skip_frames=config["skip_frames"]
     )
 
     logging.debug(f"Creating train and test dataloaders")
 
     if config["rolling_window"] == 25:
-        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False)
+        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=4)
     else:
-        test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+        test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=4)
     model = basicVSR(
         spynet_pretrained=config["spynet_pretrained"],
         pretrained_model=config["basic_vsr_pretrained"],
