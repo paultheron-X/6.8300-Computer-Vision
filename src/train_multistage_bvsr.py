@@ -112,14 +112,6 @@ def main(config):
     comp_model = torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
         comp_model.train()
-        # fix SPyNet and EDVR at first 5000 iteration
-        if epoch < 5000:
-            for k, v in comp_model.named_parameters():
-                if "spynet" in k or "edvr" in k:
-                    v.requires_grad_(False)
-        elif epoch == 5000:
-            # train all the parameters
-            comp_model.requires_grad_(True)
 
         epoch_loss, loss_curve = train_loop(
             comp_model,

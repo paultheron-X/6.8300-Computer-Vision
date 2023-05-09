@@ -21,17 +21,19 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
     with torch.no_grad():
         with tqdm(test_loader, ncols=100) as pbar:
             for idx, data in enumerate(pbar):
-                gt_sequences, lq_sequences = Variable(data[1]), Variable(data[0])
+                gt_sequences, lq_sequences = data[1], data[0]
+
                 gt_sequences = gt_sequences.to(device)
-                lq_sequences = lq_sequences.to(device)
-                pred_sequences = model(lq_sequences)
-                lq_mid = resize_sequences(lq_sequences, pred_sequences.shape[-2:])
+            
+                (in_1, in_2, in_3) = (lq_sequences[0].to(device), lq_sequences[1].to(device), lq_sequences[2].to(device))
+                
+                
+                pred_sequences = model((in_1, in_2, in_3))
 
                 # compute the loss only on the middle frame of the rolling window
-                mid_frame = pred_sequences.shape[1] // 2
-                pred_sequences = pred_sequences[:, mid_frame, :, :, :]
-                gt_sequences = gt_sequences[:, mid_frame, :, :, :]
-                lq_mid = lq_mid[:, mid_frame, :, :, :]
+                mid_frame = in_1.shape[1] // 2
+                lq_mid = in_1[:, mid_frame, :, :, :]
+                lq_mid = resize_sequences(lq_mid.unsqueeze(1), pred_sequences.shape[2:]).squeeze(1)
 
                 val_mse = criterion_mse(pred_sequences, gt_sequences)
                 lq_mse = criterion_mse(lq_mid, gt_sequences)
