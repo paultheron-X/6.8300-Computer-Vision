@@ -54,7 +54,7 @@ def train_loop(
                 loss = torch.zeros(1, device=device)
             
             if idx % 10 == 0:
-                loss_curve.append(loss_batch.item().detach().cpu())
+                loss_curve.append(loss_batch.item())
 
             pbar.set_postfix(OrderedDict(loss=f"{loss_batch.data:.10f}"))
 
