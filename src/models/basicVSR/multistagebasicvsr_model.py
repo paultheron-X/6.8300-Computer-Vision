@@ -216,8 +216,9 @@ class MultiStageBasicVSR(basicVSR):
         out = self.lrelu(self.upsample2(out))
         out = self.lrelu(self.conv_hr(out))
         out = self.conv_last(out)
+        out_temp = out
         base = self.img_upsample(input_1[:, self.mid_frame, :, :, :])
         out += base
 
-        return out
+        return out, base, out_temp, output_2
 
