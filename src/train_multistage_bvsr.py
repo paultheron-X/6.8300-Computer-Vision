@@ -70,8 +70,8 @@ def main(config):
     train_loader = DataLoader(
         train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=8
     )
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=4)
+    test_loader = DataLoader(test_dataset, batch_size=12, shuffle=False, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=12, shuffle=False, num_workers=4)
 
     model = MultiStageBasicVSR(
         spynet_pretrained=config["spynet_pretrained"],
@@ -88,11 +88,11 @@ def main(config):
             #{"params": model.backward_resblocks.parameters(), "lr": 1e-5},
             #{"params": model.forward_resblocks.parameters(), "lr": 1e-5},
             #{"params": model.fusion.parameters(), "lr": 1e-5},
-            {"params": model.upsample1.parameters(), "lr": 1e-5},
-            {"params": model.upsample2.parameters(), "lr": 1e-5},
-            {"params": model.conv_hr.parameters(), "lr": 1e-5},
-            {"params": model.conv_last.parameters(), "lr": 1e-5},
-            {"params": model.attention.parameters(), "lr": 1e-3},
+            {"params": model.upsample1.parameters(), "lr": 1e-3},
+            {"params": model.upsample2.parameters(), "lr": 1e-3},
+            {"params": model.conv_hr.parameters(), "lr": 1e-3},
+            {"params": model.conv_last.parameters(), "lr": 1e-3},
+            {"params": model.attention.parameters(), "lr": 5e-2},
         ],
         betas=(0.9, 0.99),
     )
@@ -100,7 +100,7 @@ def main(config):
     scaler = GradScaler()
 
     max_epoch = config["epochs"]
-    scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-7)
+    scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-5)
 
     os.makedirs(f'{config["result_dir"]}/models', exist_ok=True)
     os.makedirs(f'{config["result_dir"]}/images', exist_ok=True)
@@ -137,13 +137,13 @@ def main(config):
 
         # with val loader it is fast eval
         val_loss = test_loop(
-            comp_model, max_epoch, config, device, val_loader, criterion_mse
+            comp_model, 0, config, device, val_loader, criterion_mse
         )
 
         if epoch % 10 == 0 and epoch != 0:
             # we run a full eval on the test set
             _ = test_loop(
-                comp_model, max_epoch, config, device, test_loader, criterion_mse
+                comp_model, epoch, config, device, test_loader, criterion_mse
             )
 
         validation_loss.append(val_loss / len(val_loader))

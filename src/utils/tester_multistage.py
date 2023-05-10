@@ -13,6 +13,9 @@ from torchvision.utils import save_image
 
 from utils.utils_general import resize_sequences
 
+from torch.cuda.amp import autocast
+
+
 
 def test_loop(model, epoch, config, device, test_loader, criterion_mse):
     model.eval()
@@ -27,8 +30,8 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
             
                 (in_1, in_2, in_3) = (lq_sequences[0].to(device), lq_sequences[1].to(device), lq_sequences[2].to(device))
                 
-                
-                pred_sequences = model((in_1, in_2, in_3))
+                with autocast():
+                    pred_sequences = model((in_1, in_2, in_3))
 
                 # compute the loss only on the middle frame of the rolling window
                 mid_frame = in_1.shape[1] // 2

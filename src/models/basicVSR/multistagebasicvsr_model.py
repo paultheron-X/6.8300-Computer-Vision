@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 from .basicvsr_model import basicVSR
 
+from torch.nn import init
+
+
 
 class CustomAttention(nn.Module):
     def __init__(self, num_channels, *args, **kwargs) -> None:
@@ -65,6 +68,18 @@ class CustomAttention(nn.Module):
             stride=1,
             padding=1,
         )
+        
+        # init everything
+        self._initialize_weights()
+    
+    def _initialize_weights(self):
+        scale = 0.1
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv3d):
+                init.kaiming_normal_(m.weight, a=0, mode='fan_in')
+                m.weight.data *= scale
+                if m.bias is not None:
+                    init.constant_(m.bias, 0)
 
     def forward(self, input):
         # input is of shape (batch_size, 3, num_channels, height, width), apply the conv on each frame
@@ -205,3 +220,4 @@ class MultiStageBasicVSR(basicVSR):
         out += base
 
         return out
+
