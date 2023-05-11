@@ -27,6 +27,7 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                 gt_sequences, lq_sequences = data[1], data[0]
 
                 gt_sequences = gt_sequences.to(device)
+                gt_sequences = gt_sequences.squeeze(1)
             
                 (in_1, in_2, in_3) = (lq_sequences[0].to(device), lq_sequences[1].to(device), lq_sequences[2].to(device))
                 
