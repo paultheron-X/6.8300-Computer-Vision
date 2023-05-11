@@ -32,7 +32,7 @@ def train_loop(
     with tqdm(train_loader, ncols=100) as pbar:
         pbar.set_description(f"[Epoch {epoch+1}]")
         for idx, data in enumerate(pbar):
-            #optimizer.zero_grad()
+            optimizer.zero_grad()
             gt_sequences, lq_sequences = data[1], data[0]
 
             gt_sequences = gt_sequences.to(device)
