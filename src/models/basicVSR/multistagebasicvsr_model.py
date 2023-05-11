@@ -163,10 +163,10 @@ class MultiStageBasicVSR(basicVSR):
         self.mid_frame = self.rolling_window // 2
         
         # reinit the weights of the upsample1, upsample2, conv_hr, conv_last
-        self.upsample1.init_weights()
-        self.upsample2.init_weights()
-        self.conv_hr.apply(self._initialize_weights)
-        self.conv_last.apply(self._initialize_weights)
+        #self.upsample1.init_weights()
+        #self.upsample2.init_weights()
+        #self.conv_hr.apply(self._initialize_weights)
+        #self.conv_last.apply(self._initialize_weights)
         
     def _initialize_weights(self, m):
         scale = 0.1

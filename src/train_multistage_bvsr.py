@@ -83,14 +83,25 @@ def main(config):
     criterion = CharbonnierLoss().to(device)
     criterion_mse = nn.MSELoss().to(device)
     optimizer = torch.optim.Adam(
-        model.parameters(), lr=1e-3, weight_decay=1e-4,
+        [
+            #{"params": model.optical_module.parameters(), "lr": 1e-5},
+            #{"params": model.backward_resblocks.parameters(), "lr": 1e-5},
+            #{"params": model.forward_resblocks.parameters(), "lr": 1e-5},
+            #{"params": model.fusion.parameters(), "lr": 1e-5},
+            {"params": model.upsample1.parameters(), "lr": 1e-5},
+            {"params": model.upsample2.parameters(), "lr": 1e-5},
+            {"params": model.conv_hr.parameters(), "lr": 1e-5},
+            {"params": model.conv_last.parameters(), "lr": 1e-5},
+            {"params": model.attention.parameters(), "lr": 2e-4},
+        ],
+        lr=2e-4,
         betas=(0.9, 0.99),
     )
 
     scaler = GradScaler()
 
     max_epoch = config["epochs"]
-    scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-5)
+    scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-7)
 
     os.makedirs(f'{config["result_dir"]}/models', exist_ok=True)
     os.makedirs(f'{config["result_dir"]}/images', exist_ok=True)
@@ -99,7 +110,7 @@ def main(config):
     train_loss = []
     validation_loss = []
 
-    comp_model = model #torch.compile(model, backend="aot_eager")
+    comp_model = torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
         comp_model.train()
 
