@@ -12,7 +12,7 @@ class CustomAttention(nn.Module):
 
         self.num_channels = num_channels
 
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
         # first conv layer: we apply it on each elem of dim 1 of the input of shape (batch_size, 3, num_channels, height, width), so we have to apply it on each frame
         self.conv1 = nn.Conv2d(
@@ -92,11 +92,11 @@ class CustomAttention(nn.Module):
         # print(third_conv.shape)
 
         # concat the results
-        concat = torch.cat([first_conv, second_conv, third_conv], dim=1)
+        concat_input = torch.cat([first_conv, second_conv, third_conv], dim=1)
         # print('concat shape', concat.shape)
 
         # calculate the M1, M2, M3 attention masks for each frame
-        exp_concat = torch.exp(concat)
+        exp_concat = torch.exp(concat_input)
 
         # calculate the attention masks
         M = exp_concat / torch.sum(exp_concat, dim=1).unsqueeze(1)
@@ -161,7 +161,21 @@ class MultiStageBasicVSR(basicVSR):
         self.attention = CustomAttention(num_channels=self.mid_channels)
         self.rolling_window = kwargs.get("rolling_window", 5)
         self.mid_frame = self.rolling_window // 2
-
+        
+        # reinit the weights of the upsample1, upsample2, conv_hr, conv_last
+        self.upsample1.init_weights()
+        self.upsample2.init_weights()
+        self.conv_hr.apply(self._initialize_weights)
+        self.conv_last.apply(self._initialize_weights)
+        
+    def _initialize_weights(self, m):
+        scale = 0.1
+        if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv3d):
+            init.kaiming_normal_(m.weight, a=0, mode='fan_in')
+            m.weight.data *= scale
+            if m.bias is not None:
+                init.constant_(m.bias, 0)
+    
     def forward(self, input):
         """
         We're only doing the forward duch that we predict on the middle frame
@@ -220,5 +234,5 @@ class MultiStageBasicVSR(basicVSR):
         base = self.img_upsample(input_1[:, self.mid_frame, :, :, :])
         out += base
 
-        return out, base, out_temp, output_2
+        return out #, attention_output #, base, out_temp, (output_1, output_2, output_3)
 

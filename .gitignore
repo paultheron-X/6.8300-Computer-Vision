@@ -139,3 +139,6 @@ results/*
 .vscode-server
 
 checkpoints/tests
+
+
+VSR_TGA/*

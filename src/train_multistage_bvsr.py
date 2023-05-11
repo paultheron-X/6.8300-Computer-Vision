@@ -83,17 +83,7 @@ def main(config):
     criterion = CharbonnierLoss().to(device)
     criterion_mse = nn.MSELoss().to(device)
     optimizer = torch.optim.Adam(
-        [
-            #{"params": model.optical_module.parameters(), "lr": 1e-5},
-            #{"params": model.backward_resblocks.parameters(), "lr": 1e-5},
-            #{"params": model.forward_resblocks.parameters(), "lr": 1e-5},
-            #{"params": model.fusion.parameters(), "lr": 1e-5},
-            {"params": model.upsample1.parameters(), "lr": 1e-3},
-            {"params": model.upsample2.parameters(), "lr": 1e-3},
-            {"params": model.conv_hr.parameters(), "lr": 1e-3},
-            {"params": model.conv_last.parameters(), "lr": 1e-3},
-            {"params": model.attention.parameters(), "lr": 5e-2},
-        ],
+        model.parameters(), lr=1e-3, weight_decay=1e-4,
         betas=(0.9, 0.99),
     )
 
@@ -109,7 +99,7 @@ def main(config):
     train_loss = []
     validation_loss = []
 
-    comp_model = torch.compile(model, backend="aot_eager")
+    comp_model = model #torch.compile(model, backend="aot_eager")
     for epoch in range(max_epoch):
         comp_model.train()
 
