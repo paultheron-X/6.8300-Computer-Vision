@@ -234,5 +234,5 @@ class MultiStageBasicVSR(basicVSR):
         base = self.img_upsample(input_1[:, self.mid_frame, :, :, :])
         out += base
 
-        return out #, attention_output #, base, out_temp, (output_1, output_2, output_3)
+        return out#, attention_output, base, out_temp, (output_1, output_2, output_3)
 
