@@ -166,7 +166,7 @@ class MultiStageVideoDataset(VideoDataset):
             gt_images_tensor = gt_images_tensor.repeat(lr_images_tensor.shape[0], 1, 1, 1)
             
             #2. apply the transforms
-            gt_seq, lr_seq = self.transform(lr_images_tensor, gt_images_tensor)
+            gt_seq, lr_seq = self.transform(gt_images_tensor, lr_images_tensor)
             
             #3. split the sequence back into 3
             lr_images_1_tensor = lr_seq[:self.rolling_window]
