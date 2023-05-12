@@ -158,7 +158,7 @@ class MultiStageVideoDataset(VideoDataset):
 
         lr_images_3_tensor = torch.stack(lr_images_3)
         
-        if not self.is_test:
+        if not self.is_test and not self.is_val:
             # transform:
             #1. concat all the lr images in the sequence dimension
             lr_images_tensor = torch.cat([lr_images_1_tensor, lr_images_2_tensor, lr_images_3_tensor], dim=0)
