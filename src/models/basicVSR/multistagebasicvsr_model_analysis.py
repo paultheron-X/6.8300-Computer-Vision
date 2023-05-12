@@ -239,7 +239,7 @@ class MultiStageBasicVSRAnalysis(basicVSR):
         out = self.lrelu(self.upsample2(out))
         out = self.lrelu(self.conv_hr(out))
         out = self.conv_last(out)
-        res = out
+        res = out.clone()
         base = self.img_upsample(input_1[:, self.mid_frame, :, :, :])
         out += base
 
