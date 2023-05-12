@@ -43,6 +43,7 @@ class VideoDataset(Dataset):
             raise ValueError("Rolling window must be odd")
 
         self.is_test = is_test
+        self.is_val = is_val
 
         self.rolling_window = rolling_window
         self.patch_size = kwargs.get("patch_size", 64)
