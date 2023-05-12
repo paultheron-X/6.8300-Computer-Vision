@@ -3,6 +3,7 @@ import torch.nn as nn
 from .basicvsr_model import basicVSR
 
 from torch.nn import init
+import logging
 
 
 class CustomAttention(nn.Module):
@@ -167,8 +168,10 @@ class MultiStageBasicVSR(basicVSR):
         # self.conv_hr.apply(self._initialize_weights)
         # self.conv_last.apply(self._initialize_weights)
         
-        if pretrained_model is not None:
-            self.load_pretrained_weights_mstage(torch.load(pretrained_model))
+        if pretrained_model is not None:    
+            if pretrained_model.endswith('.pth'):
+                logging.info(f'Loading pretrained model from {pretrained_model}')
+                self.load_pretrained_weights_mstage(torch.load(pretrained_model))
 
     def load_pretrained_weights_mstage(self, weights_pret):
         state_dict = {k.replace('_orig_mod.',''): v for k, v in weights_pret.items()}

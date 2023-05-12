@@ -76,6 +76,7 @@ def main(config):
     model = MultiStageBasicVSR(
         spynet_pretrained=config["spynet_pretrained"],
         pretrained_bvsr=config["basic_vsr_pretrained"],
+        pretrained_model=config.get("mstage_vsr_pretrained", None),
         rolling_window=config["rolling_window"],
     ).to(device)
 
