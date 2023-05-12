@@ -61,6 +61,7 @@ def get_config(config_parser, config_name):
     fill_config_with(config, config_parser, str, "model", "OPTICAL_FLOW_MODULE")
     fill_config_with(config, config_parser, int, "model", "RESET_SPYNET")
     fill_config_with(config, config_parser, int, "model", "ATTENTION_HEADS")
+    fill_config_with(config, config_parser, str, "model", "MSTAGE_VSR_PRETRAINED")
 
     # training
     fill_config_with(config, config_parser, int, "training", "EPOCHS")
@@ -79,6 +80,8 @@ def get_config(config_parser, config_name):
     # copy paste
     with open(config_path, 'r') as f:
         config_file = f.read()
+
+    config_name = config_name.replace("tests/", "")
     with open(join(config["result_dir"], config_name), 'w') as f:
         f.write(config_file)
 

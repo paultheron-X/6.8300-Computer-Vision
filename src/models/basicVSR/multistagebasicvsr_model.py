@@ -5,7 +5,6 @@ from .basicvsr_model import basicVSR
 from torch.nn import init
 
 
-
 class CustomAttention(nn.Module):
     def __init__(self, num_channels, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -68,15 +67,15 @@ class CustomAttention(nn.Module):
             stride=1,
             padding=1,
         )
-        
+
         # init everything
         self._initialize_weights()
-    
+
     def _initialize_weights(self):
         scale = 0.1
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv3d):
-                init.kaiming_normal_(m.weight, a=0, mode='fan_in')
+                init.kaiming_normal_(m.weight, a=0, mode="fan_in")
                 m.weight.data *= scale
                 if m.bias is not None:
                     init.constant_(m.bias, 0)
@@ -148,8 +147,8 @@ class CustomAttention(nn.Module):
 
 
 class MultiStageBasicVSR(basicVSR):
-    def __init__(self, num_heads=4, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, pretrained_bvsr=None, pretrained_model=None, *args, **kwargs):
+        super().__init__(pretrained_model=pretrained_bvsr, *args, **kwargs)
 
         # freeze the weights of the basicVSR if those params are before the fusion layer
         continue_freeze = True
@@ -161,21 +160,28 @@ class MultiStageBasicVSR(basicVSR):
         self.attention = CustomAttention(num_channels=self.mid_channels)
         self.rolling_window = kwargs.get("rolling_window", 5)
         self.mid_frame = self.rolling_window // 2
-        
+
         # reinit the weights of the upsample1, upsample2, conv_hr, conv_last
-        #self.upsample1.init_weights()
-        #self.upsample2.init_weights()
-        #self.conv_hr.apply(self._initialize_weights)
-        #self.conv_last.apply(self._initialize_weights)
+        # self.upsample1.init_weights()
+        # self.upsample2.init_weights()
+        # self.conv_hr.apply(self._initialize_weights)
+        # self.conv_last.apply(self._initialize_weights)
         
+        if pretrained_model is not None:
+            self.load_pretrained_weights_mstage(torch.load(pretrained_model))
+
+    def load_pretrained_weights_mstage(self, weights_pret):
+        state_dict = {k.replace('_orig_mod.',''): v for k, v in weights_pret.items()}
+        self.load_state_dict(state_dict)
+    
     def _initialize_weights(self, m):
         scale = 0.1
         if isinstance(m, nn.Conv2d) or isinstance(m, nn.Conv3d):
-            init.kaiming_normal_(m.weight, a=0, mode='fan_in')
+            init.kaiming_normal_(m.weight, a=0, mode="fan_in")
             m.weight.data *= scale
             if m.bias is not None:
                 init.constant_(m.bias, 0)
-    
+
     def forward(self, input):
         """
         We're only doing the forward duch that we predict on the middle frame
@@ -234,5 +240,4 @@ class MultiStageBasicVSR(basicVSR):
         base = self.img_upsample(input_1[:, self.mid_frame, :, :, :])
         out += base
 
-        return out#, attention_output, base, out_temp, (output_1, output_2, output_3)
-
+        return out  # , attention_output, base, out_temp, (output_1, output_2, output_3)
