@@ -48,12 +48,12 @@ class MultiStageVideoDataset(VideoDataset):
         lr_data_dir,
         hr_data_dir,
         is_test=False,
-        is_small_test=False,
+        is_val=False,
         rolling_window=5,
         **kwargs
     ):
         super().__init__(
-            lr_data_dir, hr_data_dir, is_test, is_small_test, rolling_window, **kwargs
+            lr_data_dir, hr_data_dir, is_test, is_val, rolling_window, **kwargs
         )
         self.inds_ind_3 = [i for i in range(0, 3 * self.rolling_window, 3)]
         ind_mid_frame = self.rolling_window // 2

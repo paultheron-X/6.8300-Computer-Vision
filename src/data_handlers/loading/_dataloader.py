@@ -28,11 +28,11 @@ class VideoDataset(Dataset):
         lr_data_dir,
         hr_data_dir,
         is_test=False,
-        is_small_test=False,
+        is_val=False,
         rolling_window=5,
         **kwargs,
     ):
-        if not is_test:  # always put the training folder as input
+        if not is_val:  # always put the training folder as input
             self.lr_data_dir = lr_data_dir
             self.hr_data_dir = hr_data_dir
         else:
@@ -52,11 +52,14 @@ class VideoDataset(Dataset):
             i for i in self.total_keys if i not in ["downsampled", "fimg", "big_crop"]
         ]
 
-        small_val_keys = ["000", "010", "020", "029"]
-        if is_small_test:
-            self.keys = small_val_keys
+        val_keys = ["000", "001", "006", "017"] # in the val set
+        test_keys = ["000", "011", "015", "020"] # in the train set
+        if is_val:
+            self.keys = val_keys
+        elif is_test:
+            self.keys = test_keys
         else:
-            self.keys = self.total_keys
+            self.keys = [i for i in self.total_keys if i not in test_keys]
         
         self.files_per_key = {
                 key: sorted(

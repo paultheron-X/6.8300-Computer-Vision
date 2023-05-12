@@ -58,7 +58,7 @@ def main(config):
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
         is_test=True,
-        is_small_test=False,
+        is_val=False,
         patch_size=config["patch_size"],
         skip_frames=config["skip_frames"],
     )
@@ -67,8 +67,8 @@ def main(config):
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
-        is_test=True,
-        is_small_test=True,
+        is_test=False,
+        is_val=True,
         patch_size=config["patch_size"],
         skip_frames=config["skip_frames"],
     )
