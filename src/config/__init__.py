@@ -12,4 +12,4 @@ Method:
 """
 
 def return_config(config_name):
-    return get_config(get_config_parser(config_name))
+    return get_config(get_config_parser(config_name), config_name)
