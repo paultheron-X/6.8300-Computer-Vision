@@ -34,8 +34,14 @@ class MultiStageBasicVSR(basicVSR):
                 self.load_pretrained_weights_mstage(torch.load(pretrained_model))
 
     def load_pretrained_weights_mstage(self, weights_pret):
-        state_dict = {k.replace("_orig_mod.", ""): v for k, v in weights_pret.items()}
-        self.load_state_dict(state_dict)
+        # assert that there is the same number of keys
+        assert len(weights_pret.keys()) == len(self.state_dict().keys())
+        model_p = self.state_dict()
+        list_pret = list(weights_pret.keys())
+        # load everything with a loop, don't care about the keys
+        for i, k in enumerate(model_p.keys()):
+            model_p[k] = weights_pret[list_pret[i]]
+        self.load_state_dict(model_p)
 
     def _initialize_weights(self, m):
         scale = 0.1

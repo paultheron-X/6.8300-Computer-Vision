@@ -72,6 +72,8 @@ class CustomAttentionFeature(nn.Module):
         super().__init__(*args, **kwargs)
 
         self.num_channels = num_channels
+        self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+
 
         # 3D conv layers
         self.conv3d_feat = nn.Conv3d(
@@ -145,6 +147,8 @@ class DeepCustomAttentionFeature(nn.Module):
         super().__init__(*args, **kwargs)
 
         self.num_channels = num_channels
+        self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
+
 
         # 3D conv layers
         self.conv3d_feat = nn.Conv3d(
@@ -237,8 +241,6 @@ class CustomAttention(nn.Module):
         super().__init__(*args, **kwargs)
 
         self.num_channels = num_channels
-
-        self.relu = nn.LeakyReLU(negative_slope=0.1, inplace=True)
 
         self.attn = CustomAttentionSingleHead(num_channels=self.num_channels)
 
