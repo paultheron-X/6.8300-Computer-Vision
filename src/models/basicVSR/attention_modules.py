@@ -244,7 +244,7 @@ class CustomAttention(nn.Module):
 
         self.attn = CustomAttentionSingleHead(num_channels=self.num_channels)
 
-        self.attn_feat = DeepCustomAttentionFeature(num_channels=self.num_channels)
+        self.attn_feat = CustomAttentionFeature(num_channels=self.num_channels)
 
         # init everything
         self._initialize_weights()
