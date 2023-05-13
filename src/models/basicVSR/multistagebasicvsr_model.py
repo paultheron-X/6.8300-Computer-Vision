@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from .basicvsr_model import basicVSR
-from .attention_modules import CustomAttention
+from .attention_modules import CustomAttention, MultiHeadCustomAttention
 
 from torch.nn import init
 import logging

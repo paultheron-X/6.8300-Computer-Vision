@@ -244,7 +244,7 @@ class CustomAttention(nn.Module):
 
         self.attn = CustomAttentionSingleHead(num_channels=self.num_channels)
 
-        self.attn_feat = CustomAttentionFeature(num_channels=self.num_channels)
+        self.attn_feat = DeepCustomAttentionFeature(num_channels=self.num_channels)
 
         # init everything
         self._initialize_weights()
@@ -266,7 +266,7 @@ class CustomAttention(nn.Module):
 
 
 class MultiHeadCustomAttention(nn.Module):
-    def __init__(self, num_channels, num_heads, *args, **kwargs) -> None:
+    def __init__(self, num_channels, num_heads = 4, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         self.num_channels = num_channels
@@ -313,10 +313,6 @@ class MultiHeadCustomAttention(nn.Module):
         in_1 = input[0]
         in_2 = input[1]
         in_3 = input[2]
-
-        print("in_1 shape", in_1.shape)
-        print("in_2 shape", in_2.shape)
-        print("in_3 shape", in_3.shape)
 
         # project in_1 in_2, in_3 onto all the heads
         in_1_projected = [self.relu(head(in_1)) for head in self.heads_projector]
