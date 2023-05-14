@@ -69,6 +69,8 @@ def get_config(config_parser, config_name):
     # training
     fill_config_with(config, config_parser, int, "training", "EPOCHS")
     fill_config_with(config, config_parser, int, "training", "GRAD_ACCUM_STEPS")
+    fill_config_with(config, config_parser, float, "training", "LR_FINETUNE")
+    fill_config_with(config, config_parser, float, "training", "LR_BASE")
 
     # result
     fill_config_with(config, config_parser, str, "result", "EXP_NAME")
