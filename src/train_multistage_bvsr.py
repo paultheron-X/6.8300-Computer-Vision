@@ -105,21 +105,29 @@ def main(config):
 
     criterion = CharbonnierLoss().to(device)
     criterion_mse = nn.MSELoss().to(device)
+    
+    lr_finetune = config.get('lr_finetune', 1e-5)
+    lr_base = config.get('lr_base', 1e-4)
+    
+    logging.debug(f"Creating optimizer with lr_base={lr_base}, lr_finetune={lr_finetune}")
+    
     optimizer = torch.optim.Adam(
         [
             #{"params": model.optical_module.parameters(), "lr": 1e-5},
             #{"params": model.backward_resblocks.parameters(), "lr": 1e-5},
             #{"params": model.forward_resblocks.parameters(), "lr": 1e-5},
             #{"params": model.fusion.parameters(), "lr": 1e-5},
-            {"params": model.upsample1.parameters(), "lr": 1e-6},
-            {"params": model.upsample2.parameters(), "lr": 1e-6},
-            {"params": model.conv_hr.parameters(), "lr": 1e-6},
-            {"params": model.conv_last.parameters(), "lr": 1e-6},
-            {"params": model.attention.parameters(), "lr": 1e-5},
+            {"params": model.upsample1.parameters(), "lr": lr_finetune},
+            {"params": model.upsample2.parameters(), "lr": lr_finetune},
+            {"params": model.conv_hr.parameters(), "lr": lr_finetune},
+            {"params": model.conv_last.parameters(), "lr": lr_finetune},
+            {"params": model.attention.parameters(), "lr": lr_base},
         ],
-        lr=1e-5,
+        lr=lr_base,
         betas=(0.9, 0.99),
     )
+    
+    
 
     scaler = GradScaler()
 
