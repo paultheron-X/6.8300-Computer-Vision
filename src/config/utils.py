@@ -46,6 +46,7 @@ def get_config(config_parser, config_name):
 
     # data
     fill_config_with(config, config_parser, int, "data", "ROLLING_WINDOW")
+    fill_config_with(config, config_parser, str, "data", "DELTAS")
     fill_config_with(config, config_parser, int, "data", "NUM_INPUT_FRAMES")
     fill_config_with(config, config_parser, int, "data", "BATCH_SIZE")
     fill_config_with(config, config_parser, int, "data", "PATCH_SIZE")
@@ -61,6 +62,7 @@ def get_config(config_parser, config_name):
     fill_config_with(config, config_parser, str, "model", "OPTICAL_FLOW_MODULE")
     fill_config_with(config, config_parser, int, "model", "RESET_SPYNET")
     fill_config_with(config, config_parser, int, "model", "ATTENTION_HEADS")
+    fill_config_with(config, config_parser, int, "model", "BATCH_NORM")
     fill_config_with(config, config_parser, str, "model", "MSTAGE_VSR_PRETRAINED")
 
     # training
@@ -72,6 +74,7 @@ def get_config(config_parser, config_name):
     fill_config_with(config, config_parser, str, "result", "RESULT_DIR")
 
     config["result_dir"] = join(config["result_dir"], config["exp_name"])
+    config["deltas"] = map(int, config["deltas"].split(","))
     
     # copy past the config file in the result directory, as a cfg file
     if not os.path.exists(config["result_dir"]):
