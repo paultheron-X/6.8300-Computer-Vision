@@ -168,9 +168,10 @@ def main(config):
         logging.debug(f"Starting validation at epoch {epoch+1}")
 
         # with val loader it is fast eval
-        val_loss = test_loop(
-            comp_model, 0, config, device, val_loader, criterion_mse
-        )
+        if epoch % 5 == 0:
+            val_loss = test_loop(
+                comp_model, 0, config, device, val_loader, criterion_mse
+            )
 
         if epoch % 10 == 0 and epoch != 0:
             # we run a full eval on the test set
