@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from data_handlers.loading import MultiStageVideoDataset
-from models import MultiStageBasicVSR, MultiStageBasicVSRBN
+from models import MultiStageBasicVSR, MultiStageBasicVSRBN, MultiStageBasicMhead
 from utils.loss import CharbonnierLoss
 
 from utils.tester_multistage import test_loop
@@ -83,6 +83,14 @@ def main(config):
             pretrained_bvsr=config["basic_vsr_pretrained"],
             pretrained_model=config.get("mstage_vsr_pretrained", None),
             rolling_window=config["rolling_window"],
+        ).to(device)
+    elif config.get('multihead', 0):
+        model = MultiStageBasicMhead(
+            spynet_pretrained=config["spynet_pretrained"],
+            pretrained_bvsr=config["basic_vsr_pretrained"],
+            pretrained_model=config.get("mstage_vsr_pretrained", None),
+            rolling_window=config["rolling_window"],
+            num_heads=config['attention_heads'],
         ).to(device)
     else:
         model = MultiStageBasicVSR(

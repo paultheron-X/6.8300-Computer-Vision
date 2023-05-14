@@ -64,6 +64,7 @@ def get_config(config_parser, config_name):
     fill_config_with(config, config_parser, int, "model", "ATTENTION_HEADS")
     fill_config_with(config, config_parser, int, "model", "BATCH_NORM")
     fill_config_with(config, config_parser, str, "model", "MSTAGE_VSR_PRETRAINED")
+    fill_config_with(config, config_parser, int, "model", "MULTIHEAD")
 
     # training
     fill_config_with(config, config_parser, int, "training", "EPOCHS")

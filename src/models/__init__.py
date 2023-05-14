@@ -1,1 +1,1 @@
-from .basicVSR import basicVSR, BasicVSRPlusPlus, MultiStageBasicVSR, MultiStageBasicVSRAnalysis, MultiStageBasicVSRBN
+from .basicVSR import basicVSR, BasicVSRPlusPlus, MultiStageBasicVSR, MultiStageBasicVSRAnalysis, MultiStageBasicVSRBN, MultiStageBasicMhead
