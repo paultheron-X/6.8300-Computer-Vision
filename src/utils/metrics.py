@@ -363,7 +363,6 @@ def _convert_output_type_range(img, dst_type):
         img /= 255.
     return img.astype(dst_type)
 
-
 def reorder_image(img, input_order='HWC'):
     """Reorder images to 'HWC' order.
 
@@ -406,7 +405,6 @@ def to_y_channel(img):
         img = bgr2ycbcr(img, y_only=True)
         img = img[..., None]
     return img * 255.
-
 
 def _ssim(img1, img2):
     """Calculate SSIM (structural similarity) for one channel images.
