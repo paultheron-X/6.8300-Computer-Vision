@@ -78,6 +78,7 @@ def main(config):
 
     bn = config.get('batch_norm', 0)
     if bn:
+        logging.debug(f"Creating Base Model with BatchNorm")
         model = MultiStageBasicVSRBN(
             spynet_pretrained=config["spynet_pretrained"],
             pretrained_bvsr=config["basic_vsr_pretrained"],
@@ -85,6 +86,7 @@ def main(config):
             rolling_window=config["rolling_window"],
         ).to(device)
     elif config.get('multihead', 0):
+        logging.debug(f"Creating Base Model with Multihead Attention")
         model = MultiStageBasicMhead(
             spynet_pretrained=config["spynet_pretrained"],
             pretrained_bvsr=config["basic_vsr_pretrained"],
@@ -93,6 +95,7 @@ def main(config):
             num_heads=config['attention_heads'],
         ).to(device)
     else:
+        logging.debug(f"Creating Base Model")
         model = MultiStageBasicVSR(
             spynet_pretrained=config["spynet_pretrained"],
             pretrained_bvsr=config["basic_vsr_pretrained"],

@@ -19,7 +19,7 @@ class MultiStageBasicMhead(basicVSR):
             if "fusion.bias" in k:
                 continue_freeze = False
         self.attention = MultiHeadCustomAttention(
-            self.rolling_window, self.mid_frame, num_heads=kwargs.get("num_heads", 4)
+            num_heads=kwargs.get("num_heads", 4), num_channels=self.mid_channels
         )
         self.attention_output_bn = nn.BatchNorm2d(self.mid_channels)
         self.rolling_window = kwargs.get("rolling_window", 5)
