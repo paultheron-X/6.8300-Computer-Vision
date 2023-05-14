@@ -50,25 +50,33 @@ class MultiStageVideoDataset(VideoDataset):
         is_test=False,
         is_val=False,
         rolling_window=5,
+        deltas=(1, 2, 3),
         **kwargs
     ):
         super().__init__(
-            lr_data_dir, hr_data_dir, is_test, is_val, rolling_window, **kwargs
+            lr_data_dir, hr_data_dir, is_test, is_val, rolling_window, deltas, **kwargs
         )
-        self.inds_ind_3 = [i for i in range(0, 3 * self.rolling_window, 3)]
+        (delta_1, delta_2, delta_3) = (1,3,5) #self.deltas
         ind_mid_frame = self.rolling_window // 2
+        # Create group with largest delta (delta_1, delta_2, delta_3)
+        self.inds_ind_3 = [i for i in range(0, delta_3 * self.rolling_window, delta_3)]
         self.base_mid_indice = self.inds_ind_3[ind_mid_frame]
+        self.inds_ind_2 = [self.base_mid_indice + delta_2 * i for i in range(-ind_mid_frame, ind_mid_frame + 1)]
+        self.inds_ind_1 = [self.base_mid_indice + delta_1 * i for i in range(-ind_mid_frame, ind_mid_frame + 1)]
+        # self.inds_ind_3 = [i for i in range(0, 3 * self.rolling_window, 3)]
+        # ind_mid_frame = self.rolling_window // 2
+        # self.base_mid_indice = self.inds_ind_3[ind_mid_frame]
 
-        self.inds_ind_2 = [
-            self.base_mid_indice + i
-            for i in range(-self.rolling_window + 1, self.rolling_window, 2)
-        ]
-        self.inds_ind_1 = [
-            self.base_mid_indice + i
-            for i in range(
-                -self.rolling_window // 2 + 1, self.rolling_window // 2 + 1, 1
-            )
-        ]
+        # self.inds_ind_2 = [
+        #     self.base_mid_indice + i
+        #     for i in range(-self.rolling_window + 1, self.rolling_window, 2)
+        # ]
+        # self.inds_ind_1 = [
+        #     self.base_mid_indice + i
+        #     for i in range(
+        #         -self.rolling_window // 2 + 1, self.rolling_window // 2 + 1, 1
+        #     )
+        # ]
 
         # we calculate the indices for sliding on the most restrictive: input_3
         indices_slider = {

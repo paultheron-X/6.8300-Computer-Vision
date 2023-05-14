@@ -30,6 +30,7 @@ class VideoDataset(Dataset):
         is_test=False,
         is_val=False,
         rolling_window=5,
+        deltas=(1, 2, 3),
         **kwargs,
     ):
         if not is_val:  # always put the training folder as input
@@ -46,6 +47,7 @@ class VideoDataset(Dataset):
         self.is_val = is_val
 
         self.rolling_window = rolling_window
+        self.deltas = deltas
         self.patch_size = kwargs.get("patch_size", 64)
 
         self.total_keys = sorted(os.listdir(self.lr_data_dir))

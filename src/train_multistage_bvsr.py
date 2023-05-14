@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from data_handlers.loading import MultiStageVideoDataset
-from models import MultiStageBasicVSR
+from models import MultiStageBasicVSR, MultiStageBasicVSRBN
 from utils.loss import CharbonnierLoss
 
 from utils.tester_multistage import test_loop
@@ -43,6 +43,7 @@ def main(config):
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
+        deltas=config["deltas"],
         patch_size=config["patch_size"],
         skip_frames=config["skip_frames"],
     )
@@ -50,6 +51,7 @@ def main(config):
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
+        deltas=config["deltas"],
         is_test=True,
         is_val=False,
         patch_size=config["patch_size"],
@@ -60,6 +62,7 @@ def main(config):
         lr_data_dir=config["lr_data_dir"],
         hr_data_dir=config["hr_data_dir"],
         rolling_window=config["rolling_window"],
+        deltas=config["deltas"],
         is_test=False,
         is_val=True,
         patch_size=config["patch_size"],
@@ -73,12 +76,21 @@ def main(config):
     test_loader = DataLoader(test_dataset, batch_size=12, shuffle=False, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=12, shuffle=False, num_workers=4)
 
-    model = MultiStageBasicVSR(
-        spynet_pretrained=config["spynet_pretrained"],
-        pretrained_bvsr=config["basic_vsr_pretrained"],
-        pretrained_model=config.get("mstage_vsr_pretrained", None),
-        rolling_window=config["rolling_window"],
-    ).to(device)
+    bn = config.get('batch_norm', 0)
+    if bn:
+        model = MultiStageBasicVSRBN(
+            spynet_pretrained=config["spynet_pretrained"],
+            pretrained_bvsr=config["basic_vsr_pretrained"],
+            pretrained_model=config.get("mstage_vsr_pretrained", None),
+            rolling_window=config["rolling_window"],
+        ).to(device)
+    else:
+        model = MultiStageBasicVSR(
+            spynet_pretrained=config["spynet_pretrained"],
+            pretrained_bvsr=config["basic_vsr_pretrained"],
+            pretrained_model=config.get("mstage_vsr_pretrained", None),
+            rolling_window=config["rolling_window"],
+        ).to(device)
 
     criterion = CharbonnierLoss().to(device)
     criterion_mse = nn.MSELoss().to(device)
