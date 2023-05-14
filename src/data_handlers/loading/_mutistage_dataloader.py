@@ -56,7 +56,7 @@ class MultiStageVideoDataset(VideoDataset):
         super().__init__(
             lr_data_dir, hr_data_dir, is_test, is_val, rolling_window, deltas, **kwargs
         )
-        (delta_1, delta_2, delta_3) = (1,3,5) #self.deltas
+        (delta_1, delta_2, delta_3) = self.deltas
         ind_mid_frame = self.rolling_window // 2
         # Create group with largest delta (delta_1, delta_2, delta_3)
         self.inds_ind_3 = [i for i in range(0, delta_3 * self.rolling_window, delta_3)]
