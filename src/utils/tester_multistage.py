@@ -53,7 +53,7 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                 gt_np = gt_sequences.detach().cpu().numpy()
                 ssim_b = 0
                 for i in range(bs):
-                    ssim += calculate_ssim(pred_np[i]*255, gt_np[i]*255)
+                    ssim += calculate_ssim(pred_np[i]*255, gt_np[i]*255, crop_border=0, input_order='CHW')
                 ssim_b /= bs
                 
                 ssim += ssim_b
