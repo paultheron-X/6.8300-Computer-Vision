@@ -17,7 +17,6 @@ from .metrics import calculate_ssim
 from torch.cuda.amp import autocast
 
 
-
 def test_loop(model, epoch, config, device, test_loader, criterion_mse):
     model.eval()
     val_psnr, lq_psnr = 0, 0
