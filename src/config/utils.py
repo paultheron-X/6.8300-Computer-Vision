@@ -78,7 +78,7 @@ def get_config(config_parser, config_name):
 
     config["result_dir"] = join(config["result_dir"], config["exp_name"])
     
-    config["deltas"] = tuple([int(delta) for delta in config["deltas"].split(",")])
+    config["deltas"] = tuple([int(delta) for delta in config.get('deltas', '1,2,3').split(",")])
     
     # copy past the config file in the result directory, as a cfg file
     if not os.path.exists(config["result_dir"]):

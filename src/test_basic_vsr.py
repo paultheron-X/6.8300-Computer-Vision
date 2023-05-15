@@ -41,10 +41,10 @@ def main(config):
 
     logging.debug(f"Creating train and test dataloaders")
 
-    if config["rolling_window"] == 25:
-        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=4)
+    if config["rolling_window"] > 20:
+        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=8)
     else:
-        test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=4)
+        test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=8)
     model = basicVSR(
         spynet_pretrained=config["spynet_pretrained"],
         pretrained_model=config["basic_vsr_pretrained"],

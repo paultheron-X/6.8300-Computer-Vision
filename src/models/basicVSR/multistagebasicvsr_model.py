@@ -27,6 +27,8 @@ class MultiStageBasicVSR(basicVSR):
         # self.upsample2.init_weights()
         # self.conv_hr.apply(self._initialize_weights)
         # self.conv_last.apply(self._initialize_weights)
+        
+        logging.debug(f"Gradient will be computed for the following layers: {self._get_layers_to_train()}")
 
         if pretrained_model is not None:
             if pretrained_model.endswith(".pth"):
@@ -50,6 +52,13 @@ class MultiStageBasicVSR(basicVSR):
             m.weight.data *= scale
             if m.bias is not None:
                 init.constant_(m.bias, 0)
+
+    def _get_layers_to_train(self):
+        layers_to_train = []
+        for name, param in self.named_parameters():
+            if param.requires_grad:
+                layers_to_train.append(name)
+        return layers_to_train
 
     def forward(self, input):
         """
