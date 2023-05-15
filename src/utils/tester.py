@@ -13,6 +13,7 @@ from torchvision.utils import save_image
 
 from utils.utils_general import resize_sequences
 from .metrics import calculate_ssim
+from torch.cuda.amp import autocast
 
 
 def test_loop(model, epoch, config, device, test_loader, criterion_mse):
@@ -26,15 +27,18 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                 gt_sequences, lq_sequences = Variable(data[1]), Variable(data[0])
                 gt_sequences = gt_sequences.to(device)
                 lq_sequences = lq_sequences.to(device)
-                pred_sequences = model(lq_sequences)
+                with autocast():
+                    pred_sequences = model(lq_sequences)
                 lq_mid = resize_sequences(lq_sequences, pred_sequences.shape[-2:])
 
                 # compute the loss only on the middle frame of the rolling window
                 mid_frame = pred_sequences.shape[1] // 2
-                pred_sequences = pred_sequences[:, mid_frame, :, :, :]
-                gt_sequences = gt_sequences[:, mid_frame, :, :, :]
-                lq_mid = lq_mid[:, mid_frame, :, :, :]
-
+                #pred_sequences = pred_sequences[:, mid_frame, :, :, :]
+                #gt_sequences = gt_sequences[:, mid_frame, :, :, :]
+                #lq_mid = lq_mid[:, mid_frame, :, :, :]
+                
+                #print(pred_sequences.shape, gt_sequences.shape, lq_mid.shape)
+                
                 val_mse = criterion_mse(pred_sequences, gt_sequences)
                 lq_mse = criterion_mse(lq_mid, gt_sequences)
                 val_psnr += 10 * log10(1 / val_mse.data)
@@ -43,14 +47,14 @@ def test_loop(model, epoch, config, device, test_loader, criterion_mse):
                 bs = pred_sequences.shape[0]
                 pred_np = pred_sequences.detach().cpu().numpy()
                 gt_np = gt_sequences.detach().cpu().numpy()
-                ssim_b = 0
+                #ssim_b = 0
                 #print(bs)
-                for i in range(bs):
-                    #print(pred_np[i].shape, gt_np[i].shape)
-                    ssim_b += calculate_ssim(pred_np[i]*255, gt_np[i]*255, crop_border=0, input_order='CHW')
-                    #print(ssim)
-                ssim_b  = ssim_b/bs
-                ssim += ssim_b
+                #for i in range(bs):
+                #    #print(pred_np[i].shape, gt_np[i].shape)
+                #    ssim_b += calculate_ssim(pred_np[i]*255, gt_np[i]*255, crop_border=0, input_order='CHW')
+                #    #print(ssim)
+                #ssim_b  = ssim_b/bs
+                #ssim += ssim_b
                 
                 
                 pbar.set_description(

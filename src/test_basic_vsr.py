@@ -42,15 +42,20 @@ def main(config):
     logging.debug(f"Creating train and test dataloaders")
 
     if config["rolling_window"] > 20:
-        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=8)
+        test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False, num_workers=4)
     else:
-        test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=8)
+        test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, num_workers=4)
     model = basicVSR(
         spynet_pretrained=config["spynet_pretrained"],
         pretrained_model=config["basic_vsr_pretrained"],
         reset_spynet=config["reset_spynet"],
         optical_flow_module=config["optical_flow_module"],
     ).to(device)
+    
+    # requires_grad = False
+    for param in model.parameters():
+        param.requires_grad = False
+    
     criterion_mse = nn.MSELoss().to(device)
     max_epoch = 1
 
