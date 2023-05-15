@@ -8,8 +8,8 @@ from torch import nn
 import torch.nn.functional as F 
 
 from ..optical_flow.SPyNet import SPyNet, get_spynet
-from .modules import PixelShuffle, ResidualBlocksWithInputConv, flow_warp
-
+from .modules import PixelShuffle, ResidualBlocksWithInputConv, flow_warp, ResidualBlockNoBN, TSAFusion, PCDAlignment, PredeblurModule, make_layer
+from . import deform_conv_ext
 import logging
 
 class iconVSR(nn.Module):
@@ -311,7 +311,7 @@ class EDVRExtractor(nn.Module):
             self.conv_first = nn.Conv2d(num_in_ch, num_feat, kernel_size=3, stride=1, padding=1)
         
         # extract pyramid features 
-        self.feature_extraction = make_layer(ResidualBlockNoBN, num_extract_block, num_feat=num_feat)
+        self.feature_extraction = make_layer(ResidualBlockNoBN, num_extract_block, mid_channels=num_feat)
         self.conv_l2_1 = nn.Conv2d(num_feat, num_feat, kernel_size=3, stride=2, padding=1)
         self.conv_l2_2 = nn.Conv2d(num_feat, num_feat, kernel_size=3, stride=1, padding=1)
         self.conv_l3_1 = nn.Conv2d(num_feat, num_feat, kernel_size=3, stride=2, padding=1)
@@ -384,7 +384,6 @@ class EDVRExtractor(nn.Module):
         feat = self.fusion(aligned_feat)
 
         return feat
-
 
 class iconVSRCore(iconVSR):
     def __init__(self, *args, **kwargs):
