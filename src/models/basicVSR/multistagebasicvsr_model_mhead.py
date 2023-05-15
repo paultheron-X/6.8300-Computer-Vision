@@ -22,6 +22,9 @@ class MultiStageBasicMhead(basicVSR):
             num_heads=kwargs.get("num_heads", 4), num_channels=self.mid_channels
         )
         self.attention_output_bn = nn.BatchNorm2d(self.mid_channels)
+        self.upsample1_bn = nn.BatchNorm2d(self.mid_channels)
+        self.upsample2_bn = nn.BatchNorm2d(64)
+        self.conv_hr_bn = nn.BatchNorm2d(64)
         self.rolling_window = kwargs.get("rolling_window", 5)
         self.mid_frame = self.rolling_window // 2
 
@@ -104,9 +107,9 @@ class MultiStageBasicMhead(basicVSR):
 
         attention_output = self.attention((output_1, output_2, output_3))
         attention_output_bn = self.attention_output_bn(attention_output)
-        out = self.lrelu(self.upsample1(attention_output))
-        out = self.lrelu(self.upsample2(out))
-        out = self.lrelu(self.conv_hr(out))
+        out = self.lrelu(self.upsample1_bn(self.upsample1(attention_output)))
+        out = self.lrelu(self.upsample2_bn(self.upsample2(out)))
+        out = self.lrelu(self.conv_hr_bn(self.conv_hr(out)))
         out = self.conv_last(out)
         out_temp = out
         base = self.img_upsample(input_1[:, self.mid_frame, :, :, :])
