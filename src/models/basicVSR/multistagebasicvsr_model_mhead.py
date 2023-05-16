@@ -107,7 +107,7 @@ class MultiStageBasicMhead(basicVSR):
 
         attention_output = self.attention((output_1, output_2, output_3))
         attention_output_bn = self.attention_output_bn(attention_output)
-        out = self.lrelu(self.upsample1_bn(self.upsample1(attention_output)))
+        out = self.lrelu(self.upsample1_bn(self.upsample1(attention_output_bn)))
         out = self.lrelu(self.upsample2_bn(self.upsample2(out)))
         out = self.lrelu(self.conv_hr_bn(self.conv_hr(out)))
         out = self.conv_last(out)
@@ -115,4 +115,4 @@ class MultiStageBasicMhead(basicVSR):
         base = self.img_upsample(input_1[:, self.mid_frame, :, :, :])
         out += base
 
-        return out  # , attention_output, base, out_temp, (output_1, output_2, output_3)
+        return out
