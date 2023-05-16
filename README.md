@@ -50,6 +50,14 @@ pip install -r requirements.txt
 
 ```
 
+To run the code, run the following command
+
+```bash
+
+python src/train_multistage_bvsr.py -v -c config_mstagebvsr_final_1.cfg
+
+```
+
 ## Sources
 
 - [Survey](https://link.springer.com/article/10.1007/s10462-022-10147-y) on VSR
