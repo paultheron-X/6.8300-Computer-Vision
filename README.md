@@ -4,6 +4,8 @@ Vassili Chesterkine, Paul Theron
 
 ---
 
+## --- Readme in progress --- 
+
 This is the course project for 6.8300 - Advances in Computer Vision at MIT CSAIL.
 
 This projet was originated from this [idea](http://6.869.csail.mit.edu/fa19/projects/video_superresolution.pdf)
