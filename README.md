@@ -6,7 +6,7 @@ Vassili Chesterkine, Paul Theron
 
 ---
 
-This projet was originated from this [idea](http://6.869.csail.mit.edu/fa19/projects/video_superresolution.pdf)
+Report available [here](./report.pdf)
 ## Project Description
 
 Video Super-Resolution (VSR) is the process of enhancing low-resolution videos to high-resolution equivalents. This technique primarily capitalizes on neighboring frame alignment to extract additional information. Traditional state-of-the-art methods, while powerful, rely on high computational resources, making them less viable for resource-constrained environments.
@@ -34,14 +34,16 @@ The results from our project can be summarized in the table below:
 | Our Method |      Multi Head     | 7.7 |  30.67 |
 |            | Frame rates (1,3,5) | 6.6 |  30.65 |
 
+Our proposed method not only demonstrates competitive performance against state-of-the-art models but also showcases potential for further refinement and optimization.
 ### Figures
 
-Reconstruction with our method:
-    
+![Attention Multi Head](./tests/figs/attention_maps.png)
 
+Final reconstruction of the reference frame using the attention maps from the multi-head attention module:
 
-Our proposed method not only demonstrates competitive performance against state-of-the-art models but also showcases potential for further refinement and optimization.
+![Reconstruction](./tests/figs/full_comp.png)
 
+## Repository Usage
 ### Data
 
 We will use the REDS dataset, available here:
@@ -50,10 +52,11 @@ https://seungjunnah.github.io/Datasets/reds.html
 To download the dataset, run the following command in the terminal:
 
 ```bash
-bash src/preprocessing/download_data.sh    
+bash data/download_data.sh
+bash data/unzip_data.sh
 ```
 
-## Environment
+### Installation
 
 To create the environment, run the following command in the terminal:
 
@@ -67,28 +70,15 @@ conda activate computer_vision
 To install the required packages, run the following command
 
 ```bash
-
 pip install -r requirements.txt
-
 ```
 
-To run the code, run the following command
+### Usage
+
+To train an instance of our model, run the following command in the terminal:
 
 ```bash
-
 python src/train_multistage_bvsr.py -v -c config_mstagebvsr_final_1.cfg
-
 ```
 
-## Sources
-
-- [Survey](https://link.springer.com/article/10.1007/s10462-022-10147-y) on VSR
-- https://arxiv.org/pdf/2212.13525.pdf
-- https://arxiv.org/pdf/2212.07339.pdf
-- https://arxiv.org/pdf/2211.01639.pdf
-- https://arxiv.org/pdf/2302.13256.pdf
-- https://arxiv.org/pdf/1609.05158.pdf
-- https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8629024&tag=1
-
-Unet architecture with residual blocks
-https://openaccess.thecvf.com/content_CVPRW_2019/papers/WiCV/Hu_RUNet_A_Robust_UNet_Architecture_for_Image_Super-Resolution_CVPRW_2019_paper.pdf
+All the hyperparameters are specified in the config file. The `-v` flag enables verbose mode, which prints the training progress to the terminal.
