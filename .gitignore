@@ -134,7 +134,8 @@ private_script.txt
 
 experiments/*
 results/*
-*.png
+
+results_best/*/images/*/*.png
 
 .vscode-server
 

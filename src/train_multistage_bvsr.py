@@ -125,14 +125,15 @@ def main(config):
         ],
         lr=lr_base,
         betas=(0.9, 0.99),
+        weight_decay=1e-4,
     )
     
     scaler = GradScaler()
 
     max_epoch = config["epochs"]
-    #scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-7)
+    scheduler = CosineAnnealingLR(optimizer, T_max=max_epoch, eta_min=1e-7)
         
-    scheduler = MultiStepLR(optimizer, milestones=[10 * i for i in range(1, max_epoch)], gamma=0.5)
+    # scheduler = MultiStepLR(optimizer, milestones=[10 * i for i in range(1, max_epoch)], gamma=0.5)
     
 
     os.makedirs(f'{config["result_dir"]}/models', exist_ok=True)
