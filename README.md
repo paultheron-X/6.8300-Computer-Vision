@@ -1,10 +1,10 @@
 # Attention-based Fusion for Video Super-Resolution
 
-This is the course project for 6.8300 Advances in Computer Vision. The course is taught by Professors [William T. Freeman](https://scholar.google.com/citations?user=0zZnyMEAAAAJ&hl=en&oi=ao), [Vincent Sitzmann](https://scholar.google.com/citations?user=X44QVV4AAAAJ&hl=en&oi=ao) and [Mina Konaković Luković](https://scholar.google.com/citations?user=32Q2ni8AAAAJ&hl=en&oi=ao).
-
 Vassili Chesterkine, Paul Theron
 
 ---
+
+This is the course project for 6.8300 Advances in Computer Vision. The course is taught by Professors [William T. Freeman](https://scholar.google.com/citations?user=0zZnyMEAAAAJ&hl=en&oi=ao), [Vincent Sitzmann](https://scholar.google.com/citations?user=X44QVV4AAAAJ&hl=en&oi=ao) and [Mina Konaković Luković](https://scholar.google.com/citations?user=32Q2ni8AAAAJ&hl=en&oi=ao).
 
 Report is available [here](./report.pdf).
 
