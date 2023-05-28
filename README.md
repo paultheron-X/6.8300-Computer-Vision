@@ -1,15 +1,16 @@
 # Attention-based Fusion for Video Super-Resolution
 
-A class project for MIT 6.8300 - Advances in Computer Vision
+This is the course project for 6.8300 Advances in Computer Vision. The course is taught by Professors [William T. Freeman](https://scholar.google.com/citations?user=0zZnyMEAAAAJ&hl=en&oi=ao), [Vincent Sitzmann](https://scholar.google.com/citations?user=X44QVV4AAAAJ&hl=en&oi=ao) and [Mina Konaković Luković](https://scholar.google.com/citations?user=32Q2ni8AAAAJ&hl=en&oi=ao).
 
 Vassili Chesterkine, Paul Theron
 
 ---
 
-Report available [here](./report.pdf)
+Report is available [here](./report.pdf).
+
 ## Project Description
 
-Video Super-Resolution (VSR) is the process of enhancing low-resolution videos to high-resolution equivalents. This technique primarily capitalizes on neighboring frame alignment to extract additional information. Traditional state-of-the-art methods, while powerful, rely on high computational resources, making them less viable for resource-constrained environments.
+Video Super-Resolution (VSR) is the process of enhancing low-resolution videos to high-resolution equivalents. Compared to Image Super-Resolution, these methods capitalize on neighboring frame alignment to extract additional information. Traditional state-of-the-art methods, while powerful, rely on high computational resources, making them less viable for resource-constrained environments.
 
 This project presents a novel, resource-efficient approach to VSR. Our methodology uses a hierarchical system to incorporate temporal information, using a reduced number of frames but still maintaining substantial performance. This is achieved by partitioning the input sequence into distinct frame rate groups, each offering complementary information to recover missing details in the reference frame.
 
@@ -17,7 +18,7 @@ This project presents a novel, resource-efficient approach to VSR. Our methodolo
 
 Our approach leverages BasicVSR for feature extraction and alignment, which is the core of our model. The input sequences are partitioned into distinct frame rate groups, effectively utilizing the temporal information hierarchically.
 
-The key innovation of our method lies in an inter-group attention-based module, which we use to integrate these frame rate groups. This module enables us to recover missing details in the reference frame efficiently and accurately, making our approach superior in terms of both performance and computational efficiency.
+The key innovation of our method lies in an inter-group attention-based module, which we use to integrate information from the different frame rate groups. This module enables efficient and accurate recovery of missing details in the reference frame, making our approach superior in terms of both performance and computational efficiency.
 
 ## Main Results
 
@@ -34,12 +35,13 @@ The results from our project can be summarized in the table below:
 | Our Method |      Multi Head     | 7.7 |  30.67 |
 |            | Frame rates (1,3,5) | 6.6 |  30.65 |
 
-Our proposed method not only demonstrates competitive performance against state-of-the-art models but also showcases potential for further refinement and optimization.
-### Figures
+Our proposed method not only demonstrates competitive performance against state-of-the-art models but also showcases potential for further refinement and optimization. One should note that all of our experiments were performed with relatively limited computational infrastructure. Read more in the [final report](./report.pdf).
 
+### Figures
+The images below showcase the outputs obtained by 2 distinct attention heads. Notably, the first (top) focuses on finer details of the frames, while the second (bottom) blurs out the latter and provides a depth map of the frame. This suggests that during training, the different attention heads learn to focus on specific parts of the input, thereby providing a finer reconstruction.
 ![Attention Multi Head](./tests/figs/attention_maps.png)
 
-Final reconstruction of the reference frame using the attention maps from the multi-head attention module:
+Below is the final reconstruction of the reference frame using the attention maps from the multi-head attention module:
 
 ![Reconstruction](./tests/figs/full_comp.png)
 
